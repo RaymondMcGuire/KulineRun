@@ -4,8 +4,8 @@
  *  character controller
  *
  * ========================================================================= */
+/// <reference path="./GameConfig.ts" />
 module ECS {
-    declare var FidoAudio: any;
     declare var PIXI: any;
     declare var TweenLite: any;
     declare var Cubic: any;
@@ -38,8 +38,10 @@ module ECS {
         volume :number;
         isDead:boolean;
         isActive:boolean;
-        onGroundCache:boolean;
         bounce:number;
+
+        floorHeight:number;
+        floorSpriteHeight:number;
 
         vStart:number;
         mass:number;
@@ -64,10 +66,14 @@ module ECS {
         isPlayingNinjiaEffect:boolean = false;
         isPlayingInoEffect:boolean = false;
 
+        //speed up
+        speedUpList:any;
+
         constructor(){
 
             console.log("init character!");
             this.position = new PIXI.Point();
+            this.speedUpList = [];
 	
             this.runningFrames = [
                 PIXI.Texture.fromFrame("CHARACTER/RUN/Character-01.png"),
@@ -102,17 +108,19 @@ module ECS {
                 PIXI.Texture.fromFrame("CHARACTER/POWER/SHOOT/shoot0002.png")
             ];
 
-            
-            this.view = new PIXI.MovieClip(this.runningFrames);
+            this.view = new PIXI.extras.AnimatedSprite(this.runningFrames);
             this.view.animationSpeed = 0.23;
             
             this.view.anchor.x = 0.5;
-            this.view.anchor.y = 0.65;
+            this.view.anchor.y = 0.5;
             this.view.height=135;
             this.view.width=75;
-            
-            this.position.y = 477;
-            this.ground = 477;
+
+            this.floorSpriteHeight = (<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteHeight;
+
+            //refresh floor position
+            this.refreshFloorHeight();
+
             this.gravity = 9.8;
             
             this.baseSpeed = 8;
@@ -193,7 +201,7 @@ module ECS {
             this.marioEffect.scale.y = 2;
 
 
-            this.indonTight = new PIXI.MovieClip(this.indoTightFrame);
+            this.indonTight = new PIXI.extras.AnimatedSprite(this.indoTightFrame);
             this.indonTight.animationSpeed = 0.1;
             
             this.indonTight.anchor.x = 0.5;
@@ -201,17 +209,14 @@ module ECS {
             this.indonTight.height=GameConfig.height/2;
             this.indonTight.width=GameConfig.width/2;
 
-
-            
-            //this.view.addChild(this.indonTight);
-            //this.indonTight.play();
+            this.view.play();
+            //GameConfig.app.start();
         }
 
         update()
         {
             if(this.isDead)
             {
-                //console.log("died"); continue update
                 this.updateDieing();
             }
             else
@@ -220,23 +225,10 @@ module ECS {
             }
         }
 
-        joyrideMode()
-        {
-            this.joyRiding = true;
-            //FidoAudio.setVolume('runRegular', 0);
-            //FidoAudio.play('hyperMode');
-            TweenLite.to(this.speed, 0.3, {
-                x : 20, 
-                ease : Cubic.easeIn
-            });
-            this.realAnimationSpeed = 0.23 * 4
-        }
-
         normalMode()
         {
             this.joyRiding = false;
-            //FidoAudio.setVolume('runFast', 0);
-            //if(this.onGround === true) FidoAudio.setVolume('runRegular', this.volume);
+
             TweenLite.to(this.speed, 0.6, {
                 x : this.baseSpeed, 
                 ease : Cubic.easeOut
@@ -245,7 +237,8 @@ module ECS {
         }
 
         chkOnGround(){
-            if(Math.abs(this.position.y-this.ground)<=1){
+
+            if(this.position.y-this.ground>=0){
                 return true;
             }
 
@@ -278,20 +271,26 @@ module ECS {
                     break;
                 }
                 
-                GameConfig.game.player.speed.x*=10;
+                this.speed.x*=10;
                 this.ninjiaEffectNumber++;
             }
         }
 
         indoOperate(){
             if(!this.isPlayingInoEffect){
-                            
+                
+                //chara animation
+                this.view.textures = this.shootFrame;
+                this.view.play();
+
                 GameConfig.tmpTimeClockStart = GameConfig.time.currentTime;
-                GameConfig.game.player.view.addChild(GameConfig.game.player.indoEffect);
-                this.view.addChild(this.indonTight);
+                this.view.addChild(this.indoEffect);
+                
+                //effect play
+                (<GameViewSystem>(GameConfig.allSystem.get("view"))).game.addChild(this.indonTight);
+                this.indonTight.textures = this.indoTightFrame;
                 this.indonTight.play();
                 this.isPlayingInoEffect = true;
-                this.view.textures = this.shootFrame;
             }
         }
 
@@ -304,6 +303,7 @@ module ECS {
                 //console.log(DuringTime);
                 if(DuringTime > 200){
                     this.view.textures = this.runningFrames;
+                    this.view.play();
                     this.speed.x/=10;
      
                     this.view.removeChild(this.specialEffectView);
@@ -316,7 +316,7 @@ module ECS {
                             GameConfig.game.pickupManager.canPickOrNot = true;
                             this.resetSpecialFoods();
                             this.view.removeChild(this.backEffect);
-                            console.log("ninja finished!");
+                            //console.log("ninja finished!");
             
                     }
                 }
@@ -328,8 +328,8 @@ module ECS {
             GameConfig.tmpTimeClockEnd = GameConfig.time.currentTime;
             var DuringTime = GameConfig.timeClock();
             //console.log(DuringTime);
-            if(DuringTime > 5000){
-                console.log("mario finished!");
+            if(DuringTime > 10000){
+                //console.log("mario finished!");
                 GameConfig.specialMode = SPECIALMODE.NONE;
                 GameConfig.game.pickupManager.pickedUpPool = [];
                 GameConfig.game.pickupManager.canPickOrNot = true;
@@ -341,16 +341,19 @@ module ECS {
 
         indoMode(){
             if(this.isPlayingInoEffect){
-                this.indonTight.textures = this.indoTightFrame;
+
+                this.indonTight.position.x = this.position.x - GameConfig.camera.x;
+                this.indonTight.position.y = this.position.y - GameConfig.camera.y;
                 GameConfig.tmpTimeClockEnd = GameConfig.time.currentTime;
                 var DuringTime = GameConfig.timeClock();
                 if(DuringTime > 1000){
-                    console.log("indo finished!");
+                    //console.log("indo finished!");
                     this.isPlayingInoEffect = false;
                     GameConfig.specialMode = SPECIALMODE.NONE;
                     GameConfig.game.pickupManager.pickedUpPool = [];
                     GameConfig.game.pickupManager.canPickOrNot = true;
-                    this.view.removeChild(this.indonTight);
+
+                    (<GameViewSystem>(GameConfig.allSystem.get("view"))).game.removeChild(this.indonTight);
                     this.view.removeChild(this.indoEffect);
                     this.resetSpecialFoods();
                 }
@@ -358,10 +361,27 @@ module ECS {
 
         }
 
+        refreshFloorHeight(){
+            this.floorHeight = this.floorSpriteHeight - this.view.height * 0.5;
+            this.view.position.y =this.floorHeight;
+            this.position.y = this.floorHeight;
+            this.ground = this.floorHeight;
+        }
+
         updateRunning()
         {
             this.view.animationSpeed = this.realAnimationSpeed * GameConfig.time.DELTA_TIME * this.level;
             this.indonTight.animationSpeed = this.realAnimationSpeed * GameConfig.time.DELTA_TIME * this.level;
+
+
+            //speed up when user reach some points
+            var judgeImPoints = Math.floor(GameConfig.game.distanceScore / 2);
+            if(judgeImPoints!=0 && !this.speedUpList.includes(judgeImPoints)){
+                //console.log("speed up!");
+                this.speedUpList.push(judgeImPoints);
+                this.speed.x *=1.1;
+            }
+            
 
 
             switch( GameConfig.playerMode){
@@ -380,64 +400,32 @@ module ECS {
                 case PLAYMODE.RUNNING:
                     this.speed.y=0;
                 break;
+                case PLAYMODE.SLIDE:
+                this.speed.y=0;
+                break;
                 
             }
 
 
-
             if(!this.chkOnGround() && (GameConfig.playerMode == PLAYMODE.JUMPING1 || GameConfig.playerMode == PLAYMODE.JUMPING2 ))GameConfig.playerMode = PLAYMODE.FALL;
             else if(GameConfig.playerMode == PLAYMODE.FALL &&  this.chkOnGround()) GameConfig.playerMode = PLAYMODE.RUNNING; 
-
-
-            //console.log(GameConfig.playerMode);            
+          
             
             this.position.x += this.speed.x * GameConfig.time.DELTA_TIME * this.level;
             this.position.y += this.speed.y * GameConfig.time.DELTA_TIME;
-            //console.log(this.speed.y);
-            
-            if(this.onGround !== this.onGroundCache)
+    
+            if(this.onGround && GameConfig.playerMode == PLAYMODE.RUNNING &&  this.view.textures != this.runningFrames && !this.isPlayingInoEffect)
             {
-                this.onGroundCache = this.onGround;
-                if(this.onGround && GameConfig.playerMode == PLAYMODE.RUNNING )
-                {
-                    this.view.textures = this.runningFrames;
-                }
-                else if(GameConfig.playerMode == PLAYMODE.JUMPING1  || GameConfig.playerMode == PLAYMODE.JUMPING2)
-                {
-                    this.view.textures = this.jumpFrames;
-                }
-            }
-
-            if(GameConfig.playerMode == PLAYMODE.SLIDE ){
+                this.view.anchor.y = 0.5;
+                this.view.textures = this.runningFrames;
+                this.view.play();
+            }else if(GameConfig.playerMode == PLAYMODE.SLIDE &&  this.view.textures != this.slideFrame ){
+                this.view.anchor.y = 0.1;
                 this.view.textures = this.slideFrame;
-            }else if(this.onGround &&GameConfig.playerMode != PLAYMODE.SLIDE )
-            {
-
-                //console.log(GameConfig.specialMode);
-                switch(GameConfig.specialMode){
-                    case SPECIALMODE.NONE:
-                      this.view.textures = this.runningFrames;
-                    break;
-                    case SPECIALMODE.NINJAMODE:
-                    
-                    this.view.textures = this.runningFrames;
-  
-                    break;
-                    case SPECIALMODE.JAPANMODE:
-                    
-                    this.view.textures = this.runningFrames;
-
-                    break;
-                    case SPECIALMODE.INDONMODE:
-                    this.view.textures = this.runningFrames;
-     
-                    break;
-                }
-
-            }
-            else if(GameConfig.playerMode == PLAYMODE.JUMPING1  || GameConfig.playerMode == PLAYMODE.JUMPING2)
-            {
+                this.view.play();
+            }else if((GameConfig.playerMode == PLAYMODE.JUMPING1  || GameConfig.playerMode == PLAYMODE.JUMPING2) &&  this.view.textures != this.jumpFrames){
                 this.view.textures = this.jumpFrames;
+                this.view.play();
             }
 
 
@@ -464,12 +452,14 @@ module ECS {
                 break;
             }
 
-            
+    
             GameConfig.camera.x = this.position.x - 100;
+            GameConfig.game.distanceScore = Math.floor(this.position.x/10000);
             
             this.view.position.x = this.position.x - GameConfig.camera.x;
             this.view.position.y = this.position.y - GameConfig.camera.y;
-            
+
+
             this.view.rotation += (this.speed.y * 0.05 - this.view.rotation) * 0.1;
         }
 
@@ -518,12 +508,8 @@ module ECS {
             if(Math.abs(this.position.y-this.ground)>1)
             {
                 GameConfig.playerMode = PLAYMODE.JUMPING2;
-                //this.b_jumpTwo = true;
             }
-            // else
-            // {
-            //     this.b_jumpTwo = false;
-            // }
+
         }
 
         slide(isSlide:boolean){
@@ -535,12 +521,20 @@ module ECS {
                          this.speed.x = 10;
                      }
                  }
+
+                // console.log(isSlide);
                  
-                 if(Math.abs(this.position.y-this.ground)<=1)
+                 if(GameConfig.playerMode != PLAYMODE.SLIDE && this.position.y == this.ground)
                  {
                      this.isSlide = isSlide;
                      if(isSlide) GameConfig.playerMode = PLAYMODE.SLIDE;
-                     else GameConfig.playerMode = PLAYMODE.RUNNING;
+                     
+                 }else if(!isSlide){
+                    //console.log("slide finish");
+                    this.onGround = true;
+                    this.position.y = this.ground;
+                    this.isSlide = isSlide;
+                    GameConfig.playerMode = PLAYMODE.RUNNING;
                  }
         }
 
@@ -556,17 +550,6 @@ module ECS {
                     this.speed.x = 10;
                 }
             }
-
-            // if(Math.abs(this.position.y-this.ground)>1)
-            // {
-            //     this.isJumped = true;
-            //     this.startJump = false;
-            // }
-            // else
-            // {
-            //     this.isJumped = false;
-            //     this.startJump = true;
-            // }
             GameConfig.playerMode = PLAYMODE.JUMPING1;
         }
 
@@ -579,7 +562,6 @@ module ECS {
                 ease : Cubic.easeOut, 
                 onComplete : function()
                 {
-                    //FidoAudio.play('deathJingle');
                     TweenLite.to(GameConfig.time, 2, {
                         speed : 1, 
                         delay : 1
@@ -643,12 +625,7 @@ module ECS {
         isEatNow:boolean=false;
         constructor(){
             this.position = new PIXI.Point();
-            // this.view = new PIXI.Sprite(PIXI.Texture.fromFrame("img/doroCat.png"));
-            // this.view.anchor.x = 0.5;
-            // this.view.anchor.y = 0.5;
-            // this.view.width = 150;
-            // this.view.height=150;
-            
+                        
             this.isHit = false;
             this.width = 150;
             this.height = 150;
@@ -668,21 +645,22 @@ module ECS {
                 PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0004.png")
             ]
 
-            this.view = new PIXI.MovieClip(this.moveingFrames);
+            this.view = new PIXI.extras.AnimatedSprite(this.moveingFrames);
             this.view.animationSpeed = 0.23;
             
             this.view.anchor.x = 0.5;
             this.view.anchor.y = 0.5;
             this.view.height=150;
             this.view.width=150;
+            this.view.play();
         }
 
         reset(){
-            if(this.explosion)
-            {
-                this.view.removeChild(this.explosion);
-                this.explosion.reset();
-            }
+            // if(this.explosion)
+            // {
+            //     this.view.removeChild(this.explosion);
+            //     this.explosion.reset();
+            // }
             
             this.isHit = false;
             this.view.width = 157;
@@ -693,10 +671,10 @@ module ECS {
             if(this.isHit) return;
             this.isHit = true;
             
-            if(!this.explosion) this.explosion = new Explosion();
+            //if(!this.explosion) this.explosion = new Explosion();
             
-            this.explosion.explode();
-            this.view.addChild(this.explosion);
+            //this.explosion.explode();
+            //this.view.addChild(this.explosion);
         
             this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"))
         }
@@ -715,6 +693,7 @@ module ECS {
                 if(GameConfig.timeClock1()>2000){
                     this.isEatNow = false;
                     this.view.textures = this.moveingFrames;
+                    this.view.play();
                 }
             }
             this.view.position.y = this.position.y;

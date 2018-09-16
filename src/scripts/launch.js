@@ -58,870 +58,239 @@ var ECS;
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
- *  Entity.js
- *  Each entity has an unique ID
+ *  Utils.ts
+ *  Tools
  *
  * ========================================================================= */
-/// <reference path="./Component.ts" />
-/// <reference path="./HashSet.ts" />
-var ECS;
-(function (ECS) {
-    var Entity = /** @class */ (function () {
-        function Entity(name) {
-            this.name = name;
-            this.id = (+new Date()).toString(16) +
-                (Math.random() * 100000000 | 0).toString(16) +
-                this.count;
-            this.count++;
-            this.components = new Utils.HashSet();
+var Utils;
+(function (Utils) {
+    var DeviceDetect = /** @class */ (function () {
+        function DeviceDetect() {
+            this.arora = false;
+            this.chrome = false;
+            this.epiphany = false;
+            this.firefox = false;
+            this.mobileSafari = false;
+            this.ie = false;
+            this.ieVersion = 0;
+            this.midori = false;
+            this.opera = false;
+            this.safari = false;
+            this.webApp = false;
+            this.cocoonJS = false;
+            this.android = false;
+            this.chromeOS = false;
+            this.iOS = false;
+            this.linux = false;
+            this.macOS = false;
+            this.windows = false;
+            this.desktop = false;
+            this.pixelRatio = 0;
+            this.iPhone = false;
+            this.iPhone4 = false;
+            this.iPad = false;
+            this.blob = false;
+            this.canvas = false;
+            this.localStorage = false;
+            this.file = false;
+            this.fileSystem = false;
+            this.webGL = false;
+            this.worker = false;
+            this.audioData = false;
+            this.webAudio = false;
+            this.ogg = false;
+            this.opus = false;
+            this.mp3 = false;
+            this.wav = false;
+            this.m4a = false;
+            this.webm = false;
+            this.touch = false;
+            var ua = navigator.userAgent;
+            this.CheckBrowser(ua);
+            this.CheckOS(ua);
+            this.CheckDevice();
+            this.CheckAudio();
+            this.CheckFeatures();
         }
-        Entity.prototype.addComponent = function (component) {
-            this.components.set(component.name, component);
-            //console.log("add ["+component.name+"] component");
-        };
-        Entity.prototype.removeComponent = function (component) {
-            var name = component.name;
-            var deletOrNot = this.components["delete"](name);
-            if (deletOrNot) {
-                console.log("delete [" + name + "] success!");
+        DeviceDetect.prototype.CheckBrowser = function (ua) {
+            if (/Arora/.test(ua)) {
+                this.arora = true;
             }
-            else {
-                console.log("delete [" + name + "] fail! not exist!");
+            else if (/Chrome/.test(ua)) {
+                this.chrome = true;
             }
-        };
-        return Entity;
-    }());
-    ECS.Entity = Entity;
-    var ThreeJsMoveEntity = /** @class */ (function () {
-        function ThreeJsMoveEntity(startPos, endPos) {
-            this.startPos = startPos;
-            this.endPos = endPos;
-        }
-        return ThreeJsMoveEntity;
-    }());
-    ECS.ThreeJsMoveEntity = ThreeJsMoveEntity;
-})(ECS || (ECS = {}));
-/* =========================================================================
- *
- *  System.ts
- *  system using for controlling the game
- *
- * ========================================================================= */
-/// <reference path="./Entity.ts" />
-/// <reference path="./HashSet.ts" />
-/// <reference path="./Utils.ts" />
-var ECS;
-(function (ECS) {
-    function update() {
-        ECS.GameConfig.game.update();
-        requestAnimationFrame(update);
-    }
-    ECS.update = update;
-    var System = /** @class */ (function () {
-        function System(name) {
-            this.name = name;
-        }
-        System.prototype.Execute = function () {
-            console.log("[" + this.name + "]System Execute!");
-        };
-        return System;
-    }());
-    ECS.System = System;
-    var LoadingSystem = /** @class */ (function (_super) {
-        __extends(LoadingSystem, _super);
-        function LoadingSystem() {
-            return _super.call(this, "loading") || this;
-        }
-        LoadingSystem.prototype.StressTestCompleted = function () {
-            this.stressTest.end();
-            ECS.GameConfig.resize();
-            window.addEventListener('resize', function () {
-                ECS.GameConfig.resize();
-            });
-        };
-        LoadingSystem.prototype.Execute = function () {
-            var _this = this;
-            _super.prototype.Execute.call(this);
-            //FidoAudio.init();
-            this.stressTest = new PIXI.StressTest(function () {
-                _this.stressTest.end();
-                ECS.GameConfig.interactive = false;
-                var loader = new PIXI.AssetLoader([
-                    "img/stretched_hyper_tile.jpg",
-                    "img/doroCat.png",
-                    "img/dash_stock.png",
-                    "img/blade.png",
-                    "img/SplashAssets.json",
-                    "img/WorldAssets-hd.json",
-                    "img/PixiAssets-hd.json",
-                    "img/platform.png",
-                    "img/bg_up.png",
-                    "img/bg_down.png",
-                    "img/floatingGround.png",
-                    "assets/background/BackgroundAssets.json",
-                    "assets/food/food.json",
-                    "assets/playUI/playPanel.json",
-                    "assets/playUI/number.json",
-                    "assets/character/chara1.json",
-                    "img/blackSquare.jpg",
-                ]);
-                loader.addEventListener('onComplete', function (event) {
-                    console.log("data assets loaded!");
-                    _this.stressTest.remove();
-                    _this.init();
-                });
-                loader.load();
-                ECS.GameConfig.resize();
-            });
-        };
-        LoadingSystem.prototype.init = function () {
-            ECS.GameConfig.gameMode = ECS.GAMEMODE.INTRO;
-            ECS.GameConfig.interactive = false;
-            ECS.GameConfig.game = new ECS.GameKernel();
-            var game = ECS.GameConfig.game;
-            document.body.appendChild(game.view.renderer.view);
-            game.view.renderer.view.style.position = "absolute";
-            game.view.renderer.view.webkitImageSmoothingEnabled = false;
-            game.view.showHud();
-            //bind event 
-            var evtSys = new EventListenerSystem();
-            evtSys.bindEvent();
-            requestAnimationFrame(update);
-            ECS.GameConfig.resize();
-            ECS.GameConfig.interactive = false;
-            FidoAudio.play('gameMusic');
-            game.start();
-            game.player.jump();
-            ECS.GameConfig.gameMode = ECS.GAMEMODE.PLAYING;
-        };
-        return LoadingSystem;
-    }(System));
-    ECS.LoadingSystem = LoadingSystem;
-    var MainSystem = /** @class */ (function (_super) {
-        __extends(MainSystem, _super);
-        function MainSystem(GlobalDatas, othSystems) {
-            var _this = _super.call(this, "main") || this;
-            _this.GlobalDatas = GlobalDatas;
-            _this.OtherSystems = othSystems;
-            _this.MainSystem = _this;
-            return _this;
-        }
-        MainSystem.prototype.Execute = function () {
-            _super.prototype.Execute.call(this);
-            var g = this.GlobalDatas;
-            var m = this.MainSystem;
-            this.OtherSystems.forEach(function (key, val) {
-                val.GlobalDatas = g;
-                val.MainSystem = m;
-                val.Execute();
-            });
-        };
-        return MainSystem;
-    }(System));
-    ECS.MainSystem = MainSystem;
-    var EventListenerSystem = /** @class */ (function (_super) {
-        __extends(EventListenerSystem, _super);
-        function EventListenerSystem() {
-            return _super.call(this, "eventlistener") || this;
-        }
-        EventListenerSystem.prototype.bindEvent = function () {
-            //for pc version
-            window.addEventListener("keydown", this.onKeyDown, true);
-            window.addEventListener("keyup", this.onKeyUp, true);
-            window.addEventListener("touchstart", this.onTouchStart, true);
-        };
-        EventListenerSystem.prototype.onKeyDown = function (event) {
-            if (event.keyCode == 32 || event.keyCode == 38) {
-                if (ECS.GameConfig.game.isPlaying && !ECS.GameConfig.game.player.startJump && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
-                    ECS.GameConfig.game.player.jump();
-                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.game.player.isJumped && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
-                    ECS.GameConfig.game.player.jumpTwo();
+            else if (/Epiphany/.test(ua)) {
+                this.epiphany = true;
             }
-            else if (event.keyCode == 40) {
-                if (ECS.GameConfig.game.isPlaying && !ECS.GameConfig.game.player.isJumped && ECS.GameConfig.game.player.onGround) {
-                    ECS.GameConfig.game.player.slide(true);
-                }
+            else if (/Firefox/.test(ua)) {
+                this.firefox = true;
             }
-            else if (event.keyCode == 39) {
-                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.JAPANMODE) {
-                    ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.dashFrames;
-                    ECS.GameConfig.game.player.ninjiaOperate();
-                }
-                else if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.INDONMODE) {
-                    ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.runningFrames;
-                    ECS.GameConfig.game.player.indoOperate();
-                }
+            else if (/Mobile Safari/.test(ua)) {
+                this.mobileSafari = true;
+            }
+            else if (/MSIE (\d+\.\d+);/.test(ua)) {
+                this.ie = true;
+                this.ieVersion = parseInt(RegExp.$1, 10);
+            }
+            else if (/Midori/.test(ua)) {
+                this.midori = true;
+            }
+            else if (/Opera/.test(ua)) {
+                this.opera = true;
+            }
+            else if (/Safari/.test(ua)) {
+                this.safari = true;
+            }
+            // Native Application
+            if (navigator['standalone']) {
+                this.webApp = true;
+            }
+            // CocoonJS Application
+            if (navigator['isCocoonJS']) {
+                this.cocoonJS = true;
             }
         };
-        EventListenerSystem.prototype.onKeyUp = function (event) {
-            if (event.keyCode == 40) {
-                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.game.player.isSlide) {
-                    ECS.GameConfig.game.player.slide(false);
-                }
+        DeviceDetect.prototype.CheckOS = function (ua) {
+            if (/Android/.test(ua)) {
+                this.android = true;
+            }
+            else if (/CrOS/.test(ua)) {
+                this.chromeOS = true;
+            }
+            else if (/iP[ao]d|iPhone/i.test(ua)) {
+                this.iOS = true;
+            }
+            else if (/Linux/.test(ua)) {
+                this.linux = true;
+            }
+            else if (/Mac OS/.test(ua)) {
+                this.macOS = true;
+            }
+            else if (/Windows/.test(ua)) {
+                this.windows = true;
+            }
+            if (this.windows || this.macOS || this.linux) {
+                this.desktop = true;
             }
         };
-        EventListenerSystem.prototype.onTouchStart = function (event) {
-            if (event.target.type !== 'button') {
-                if (ECS.GameConfig.game.isPlaying && !(ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1))
-                    ECS.GameConfig.game.player.jump();
-                if (ECS.GameConfig.game.isPlaying && (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1))
-                    ECS.GameConfig.game.player.jumpTwo();
+        DeviceDetect.prototype.CheckDevice = function () {
+            this.pixelRatio = window['devicePixelRatio'] || 1;
+            this.iPhone = navigator.userAgent.toLowerCase().indexOf('iphone') !== -1;
+            this.iPhone4 = (this.pixelRatio === 2 && this.iPhone);
+            this.iPad = navigator.userAgent.toLowerCase().indexOf('ipad') !== -1;
+        };
+        DeviceDetect.prototype.CheckFeatures = function () {
+            if (typeof window['Blob'] !== 'undefined')
+                this.blob = true;
+            this.canvas = !!window['CanvasRenderingContext2D'];
+            try {
+                this.localStorage = !!localStorage.getItem;
+            }
+            catch (error) {
+                this.localStorage = false;
+            }
+            this.file = !!window['File'] && !!window['FileReader'] && !!window['FileList'] && !!window['Blob'];
+            this.fileSystem = !!window['requestFileSystem'];
+            this.webGL = !!window['WebGLRenderingContext'];
+            this.worker = !!window['Worker'];
+            if ('ontouchstart' in document.documentElement || window.navigator.msPointerEnabled) {
+                this.touch = true;
             }
         };
-        return EventListenerSystem;
-    }(System));
-    ECS.EventListenerSystem = EventListenerSystem;
-})(ECS || (ECS = {}));
-/// <reference path="./core/Component.ts" />
-/// <reference path="./core/System.ts" />
-/// <reference path="./core/Entity.ts" />
-/// <reference path="./core/HashSet.ts" />
-var load = function () {
-    var load_system = new ECS.LoadingSystem();
-    load_system.Execute();
-};
-document.getElementById("btn_play").onclick = function () {
-    document.getElementById("global").style.display = "none";
-    load();
-};
-/* =========================================================================
- *
- *  GameCharacter.ts
- *  character controller
- *
- * ========================================================================= */
-var ECS;
-(function (ECS) {
-    var GameCharacter = /** @class */ (function () {
-        function GameCharacter() {
-            this.isSlide = false;
-            this.ninjiaEffectNumber = 0;
-            this.isPlayingNinjiaEffect = false;
-            this.isPlayingInoEffect = false;
-            console.log("init character!");
-            this.position = new PIXI.Point();
-            this.runningFrames = [
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-01.png"),
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-02.png"),
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-03.png"),
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-04.png"),
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-05.png"),
-                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-06.png"),
-            ];
-            this.indoTightFrame = [
-                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0001.png"),
-                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0002.png"),
-                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0003.png"),
-                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0004.png")
-            ];
-            this.jumpFrames = [
-                PIXI.Texture.fromFrame("CHARACTER/JUMP/Jump.png"),
-            ];
-            this.slideFrame = [
-                PIXI.Texture.fromFrame("CHARACTER/SLIDE/Slide.png"),
-            ];
-            this.dashFrames = [
-                PIXI.Texture.fromFrame("CHARACTER/POWER/DASH/dash0002.png")
-            ];
-            this.shootFrame = [
-                PIXI.Texture.fromFrame("CHARACTER/POWER/SHOOT/shoot0001.png"),
-                PIXI.Texture.fromFrame("CHARACTER/POWER/SHOOT/shoot0002.png")
-            ];
-            this.view = new PIXI.MovieClip(this.runningFrames);
-            this.view.animationSpeed = 0.23;
-            this.view.anchor.x = 0.5;
-            this.view.anchor.y = 0.65;
-            this.view.height = 135;
-            this.view.width = 75;
-            this.position.y = 477;
-            this.ground = 477;
-            this.gravity = 9.8;
-            this.baseSpeed = 8;
-            this.speed = new PIXI.Point(this.baseSpeed, 0);
-            this.activeCount = 0;
-            this.isJumped = false;
-            this.accel = 0;
-            this.width = 26;
-            this.height = 37;
-            this.onGround = true;
-            this.rotationSpeed = 0;
-            this.joyRiding = false;
-            this.level = 1;
-            this.realAnimationSpeed = 0.23;
-            this.volume = 0.3;
-            //start speed
-            this.vStart = 30;
-            this.mass = 65;
-            this.angle = Math.PI * 45 / 360;
-            this.startJump = false;
-            this.b_jumpTwo = false;
-            this.smooth = 0.05;
-            this.cnt = 0;
-            this.shinobiEffect1 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
-            this.shinobiEffect1.anchor.x = -1.5;
-            this.shinobiEffect1.anchor.y = 5.5;
-            this.shinobiEffect1.scale.x = 0.2;
-            this.shinobiEffect1.scale.y = 0.2;
-            this.shinobiEffect2 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
-            this.shinobiEffect2.anchor.x = 0;
-            this.shinobiEffect2.anchor.y = 5.5;
-            this.shinobiEffect2.scale.x = 0.2;
-            this.shinobiEffect2.scale.y = 0.2;
-            this.shinobiEffect3 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
-            this.shinobiEffect3.anchor.x = 1.5;
-            this.shinobiEffect3.anchor.y = 5.5;
-            this.shinobiEffect3.scale.x = 0.2;
-            this.shinobiEffect3.scale.y = 0.2;
-            this.backEffect = new PIXI.Sprite(PIXI.Texture.fromImage("img/blade.png"));
-            this.backEffect.anchor.x = 0.8;
-            this.backEffect.anchor.y = 0.5;
-            this.backEffect.scale.x = 1;
-            this.backEffect.scale.y = 1;
-            this.specialEffectView = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/DASH/dash-shinobi-new.png"));
-            this.specialEffectView.anchor.x = 0.2;
-            this.specialEffectView.anchor.y = 0.5;
-            this.specialEffectView.scale.x = 2;
-            this.specialEffectView.scale.y = 2;
-            this.indoEffect = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/SHOOT/maung shoot-new.png"));
-            this.indoEffect.anchor.x = 0.2;
-            this.indoEffect.anchor.y = 0.6;
-            this.indoEffect.scale.x = 2;
-            this.indoEffect.scale.y = 2;
-            this.marioEffect = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/MARIO/maung ninja.png"));
-            this.marioEffect.anchor.x = 0.1;
-            this.marioEffect.anchor.y = 0.52;
-            this.marioEffect.scale.x = 2;
-            this.marioEffect.scale.y = 2;
-            this.indonTight = new PIXI.MovieClip(this.indoTightFrame);
-            this.indonTight.animationSpeed = 0.1;
-            this.indonTight.anchor.x = 0.5;
-            this.indonTight.anchor.y = 0.5;
-            this.indonTight.height = ECS.GameConfig.height / 2;
-            this.indonTight.width = ECS.GameConfig.width / 2;
-            //this.view.addChild(this.indonTight);
-            //this.indonTight.play();
-        }
-        GameCharacter.prototype.update = function () {
-            if (this.isDead) {
-                //console.log("died"); continue update
-                this.updateDieing();
-            }
-            else {
-                this.updateRunning();
-            }
-        };
-        GameCharacter.prototype.joyrideMode = function () {
-            this.joyRiding = true;
-            //FidoAudio.setVolume('runRegular', 0);
-            //FidoAudio.play('hyperMode');
-            TweenLite.to(this.speed, 0.3, {
-                x: 20,
-                ease: Cubic.easeIn
-            });
-            this.realAnimationSpeed = 0.23 * 4;
-        };
-        GameCharacter.prototype.normalMode = function () {
-            this.joyRiding = false;
-            //FidoAudio.setVolume('runFast', 0);
-            //if(this.onGround === true) FidoAudio.setVolume('runRegular', this.volume);
-            TweenLite.to(this.speed, 0.6, {
-                x: this.baseSpeed,
-                ease: Cubic.easeOut
-            });
-            this.realAnimationSpeed = 0.23;
-        };
-        GameCharacter.prototype.chkOnGround = function () {
-            if (Math.abs(this.position.y - this.ground) <= 1) {
-                return true;
-            }
-            return false;
-        };
-        GameCharacter.prototype.resetSpecialFoods = function () {
-            for (var i = 0; i < 4; i++) {
-                ECS.GameConfig.game.view.specialFood.digits[i].texture = ECS.GameConfig.game.view.specialFood.foods[i];
-            }
-        };
-        GameCharacter.prototype.ninjiaOperate = function () {
-            if (this.ninjiaEffectNumber < 3 && !this.isPlayingNinjiaEffect) {
-                //console.log("dash");
-                this.isPlayingNinjiaEffect = true;
-                ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
-                this.view.addChild(this.specialEffectView);
-                switch (this.ninjiaEffectNumber) {
-                    case 0:
-                        this.view.removeChild(this.shinobiEffect1);
-                        break;
-                    case 1:
-                        this.view.removeChild(this.shinobiEffect2);
-                        break;
-                    case 2:
-                        this.view.removeChild(this.shinobiEffect3);
-                        break;
-                }
-                ECS.GameConfig.game.player.speed.x *= 10;
-                this.ninjiaEffectNumber++;
-            }
-        };
-        GameCharacter.prototype.indoOperate = function () {
-            if (!this.isPlayingInoEffect) {
-                ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
-                ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.indoEffect);
-                this.view.addChild(this.indonTight);
-                this.indonTight.play();
-                this.isPlayingInoEffect = true;
-                this.view.textures = this.shootFrame;
-            }
-        };
-        GameCharacter.prototype.ninjaMode = function () {
-            if (this.isPlayingNinjiaEffect) {
-                ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
-                var DuringTime = ECS.GameConfig.timeClock();
-                //console.log(DuringTime);
-                if (DuringTime > 200) {
-                    this.view.textures = this.runningFrames;
-                    this.speed.x /= 10;
-                    this.view.removeChild(this.specialEffectView);
-                    this.isPlayingNinjiaEffect = false;
-                    if (this.ninjiaEffectNumber == 3) {
-                        this.ninjiaEffectNumber = 0;
-                        ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
-                        ECS.GameConfig.game.pickupManager.pickedUpPool = [];
-                        ECS.GameConfig.game.pickupManager.canPickOrNot = true;
-                        this.resetSpecialFoods();
-                        this.view.removeChild(this.backEffect);
-                        console.log("ninja finished!");
+        DeviceDetect.prototype.CheckAudio = function () {
+            this.audioData = !!(window['Audio']);
+            this.webAudio = !!(window['webkitAudioContext'] || window['AudioContext']);
+            var audioElement = document.createElement('audio');
+            var result = false;
+            try {
+                if (result = !!audioElement.canPlayType) {
+                    if (audioElement.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/, '')) {
+                        this.ogg = true;
+                    }
+                    if (audioElement.canPlayType('audio/mpeg;').replace(/^no$/, '')) {
+                        this.mp3 = true;
+                    }
+                    // Mimetypes accepted:
+                    //   developer.mozilla.org/En/Media_formats_supported_by_the_audio_and_video_elements
+                    //   bit.ly/iphoneoscodecs
+                    if (audioElement.canPlayType('audio/wav; codecs="1"').replace(/^no$/, '')) {
+                        this.wav = true;
+                    }
+                    if (audioElement.canPlayType('audio/x-m4a;') || audioElement.canPlayType('audio/aac;').replace(/^no$/, '')) {
+                        this.m4a = true;
                     }
                 }
             }
+            catch (e) { }
         };
-        GameCharacter.prototype.marioMode = function () {
-            ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
-            var DuringTime = ECS.GameConfig.timeClock();
-            //console.log(DuringTime);
-            if (DuringTime > 5000) {
-                console.log("mario finished!");
-                ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
-                ECS.GameConfig.game.pickupManager.pickedUpPool = [];
-                ECS.GameConfig.game.pickupManager.canPickOrNot = true;
-                this.speed.x /= 2;
-                this.view.removeChild(this.marioEffect);
-                this.resetSpecialFoods();
-            }
-        };
-        GameCharacter.prototype.indoMode = function () {
-            if (this.isPlayingInoEffect) {
-                this.indonTight.textures = this.indoTightFrame;
-                ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
-                var DuringTime = ECS.GameConfig.timeClock();
-                if (DuringTime > 1000) {
-                    console.log("indo finished!");
-                    this.isPlayingInoEffect = false;
-                    ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
-                    ECS.GameConfig.game.pickupManager.pickedUpPool = [];
-                    ECS.GameConfig.game.pickupManager.canPickOrNot = true;
-                    this.view.removeChild(this.indonTight);
-                    this.view.removeChild(this.indoEffect);
-                    this.resetSpecialFoods();
-                }
-            }
-        };
-        GameCharacter.prototype.updateRunning = function () {
-            this.view.animationSpeed = this.realAnimationSpeed * ECS.GameConfig.time.DELTA_TIME * this.level;
-            this.indonTight.animationSpeed = this.realAnimationSpeed * ECS.GameConfig.time.DELTA_TIME * this.level;
-            switch (ECS.GameConfig.playerMode) {
-                case ECS.PLAYMODE.JUMPING1:
-                    this.speed.y = -this.vStart * Math.sin(this.angle);
-                    break;
-                case ECS.PLAYMODE.JUMPING2:
-                    this.speed.y = -this.vStart * Math.sin(this.angle);
-                    break;
-                case ECS.PLAYMODE.FALL:
-                    //should have gravity
-                    this.speed.y += this.gravity * ECS.GameConfig.time.DELTA_TIME * this.smooth;
-                    break;
-                case ECS.PLAYMODE.RUNNING:
-                    this.speed.y = 0;
-                    break;
-            }
-            if (!this.chkOnGround() && (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1 || ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING2))
-                ECS.GameConfig.playerMode = ECS.PLAYMODE.FALL;
-            else if (ECS.GameConfig.playerMode == ECS.PLAYMODE.FALL && this.chkOnGround())
-                ECS.GameConfig.playerMode = ECS.PLAYMODE.RUNNING;
-            //console.log(GameConfig.playerMode);            
-            this.position.x += this.speed.x * ECS.GameConfig.time.DELTA_TIME * this.level;
-            this.position.y += this.speed.y * ECS.GameConfig.time.DELTA_TIME;
-            //console.log(this.speed.y);
-            if (this.onGround !== this.onGroundCache) {
-                this.onGroundCache = this.onGround;
-                if (this.onGround && ECS.GameConfig.playerMode == ECS.PLAYMODE.RUNNING) {
-                    this.view.textures = this.runningFrames;
-                }
-                else if (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1 || ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING2) {
-                    this.view.textures = this.jumpFrames;
-                }
-            }
-            if (ECS.GameConfig.playerMode == ECS.PLAYMODE.SLIDE) {
-                this.view.textures = this.slideFrame;
-            }
-            else if (this.onGround && ECS.GameConfig.playerMode != ECS.PLAYMODE.SLIDE) {
-                //console.log(GameConfig.specialMode);
-                switch (ECS.GameConfig.specialMode) {
-                    case ECS.SPECIALMODE.NONE:
-                        this.view.textures = this.runningFrames;
-                        break;
-                    case ECS.SPECIALMODE.NINJAMODE:
-                        this.view.textures = this.runningFrames;
-                        break;
-                    case ECS.SPECIALMODE.JAPANMODE:
-                        this.view.textures = this.runningFrames;
-                        break;
-                    case ECS.SPECIALMODE.INDONMODE:
-                        this.view.textures = this.runningFrames;
-                        break;
-                }
-            }
-            else if (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1 || ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING2) {
-                this.view.textures = this.jumpFrames;
-            }
-            switch (ECS.GameConfig.specialMode) {
-                case ECS.SPECIALMODE.NONE:
-                    break;
-                case ECS.SPECIALMODE.NINJAMODE:
-                    this.marioMode();
-                    break;
-                case ECS.SPECIALMODE.JAPANMODE:
-                    if (this.ninjiaEffectNumber <= 3) {
-                        this.ninjaMode();
-                    }
-                    break;
-                case ECS.SPECIALMODE.INDONMODE:
-                    this.indoMode();
-                    break;
-            }
-            ECS.GameConfig.camera.x = this.position.x - 100;
-            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
-            this.view.position.y = this.position.y - ECS.GameConfig.camera.y;
-            this.view.rotation += (this.speed.y * 0.05 - this.view.rotation) * 0.1;
-        };
-        GameCharacter.prototype.updateDieing = function () {
-            this.speed.x *= 0.999;
-            if (this.onGround)
-                this.speed.y *= 0.99;
-            this.speed.y += 0.1;
-            this.accel += (0 - this.accel) * 0.1 * ECS.GameConfig.time.DELTA_TIME;
-            this.speed.y += this.gravity * ECS.GameConfig.time.DELTA_TIME;
-            ;
-            this.position.x += this.speed.x * ECS.GameConfig.time.DELTA_TIME;
-            ;
-            this.position.y += this.speed.y * ECS.GameConfig.time.DELTA_TIME;
-            ;
-            ECS.GameConfig.camera.x = this.position.x - 100;
-            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
-            this.view.position.y = this.position.y - ECS.GameConfig.camera.y;
-            if (this.speed.x < 5) {
-                this.view.rotation += this.rotationSpeed * (this.speed.x / 5) * ECS.GameConfig.time.DELTA_TIME;
+        DeviceDetect.prototype.PrintInfo = function () {
+            var output = "DEVICE OUTPUT\n\n";
+            output += "---\n";
+            output += "Browser Info :: \n";
+            output += "Arora : " + this.arora + "\n";
+            output += "Chrome : " + this.chrome + "\n";
+            output += "Epiphany : " + this.epiphany + "\n";
+            output += "Firefox : " + this.firefox + "\n";
+            output += "Mobile Safari : " + this.mobileSafari + "\n";
+            output += "IE : " + this.ie;
+            if (this.ie) {
+                output += " (Version " + this.ieVersion + ")\n";
             }
             else {
-                this.view.rotation += this.rotationSpeed * ECS.GameConfig.time.DELTA_TIME;
+                output += "\n";
             }
+            output += "Midori : " + this.midori + "\n";
+            output += "Opera : " + this.opera + "\n";
+            output += "Safari : " + this.safari + "\n";
+            output += "Web App : " + this.webApp + "\n";
+            output += "CocoonJS : " + this.cocoonJS + "\n";
+            output += "Android : " + this.android + "\n";
+            output += "---\n";
+            output += "Operating System :: \n";
+            output += "Chrome OS : " + this.chromeOS + "\n";
+            output += "iOS : " + this.iOS + "\n";
+            output += "Linux : " + this.linux + "\n";
+            output += "Mac OS : " + this.macOS + "\n";
+            output += "Windows : " + this.windows + "\n";
+            output += "Desktop : " + this.desktop + "\n";
+            output += "---\n";
+            output += "Device Type : \n";
+            output += "Pixel Ratio : " + this.pixelRatio + "\n";
+            output += "iPhone : " + this.iPhone + "\n";
+            output += "iPhone 4 : " + this.iPhone4 + "\n";
+            output += "iPad : " + this.iPad + "\n";
+            output += "---\n";
+            output += "Features :: \n";
+            output += "Blob : " + this.blob + "\n";
+            output += "Canvas : " + this.canvas + "\n";
+            output += "LocalStorage : " + this.localStorage + "\n";
+            output += "File : " + this.file + "\n";
+            output += "File System : " + this.fileSystem + "\n";
+            output += "WebGL : " + this.webGL + "\n";
+            output += "Workers : " + this.worker + "\n";
+            output += "---\n";
+            output += "Audio :: \n";
+            output += "AudioData : " + this.audioData + "\n";
+            output += "WebAudio : " + this.webAudio + "\n";
+            output += "Supports .ogg : " + this.ogg + "\n";
+            output += "Supports Opus : " + this.opus + "\n";
+            output += "Supports .mp3 : " + this.mp3 + "\n";
+            output += "Supports .wav : " + this.wav + "\n";
+            output += "Supports .m4a : " + this.m4a + "\n";
+            output += "Supports .webm : " + this.webm;
+            return output;
         };
-        GameCharacter.prototype.jumpTwo = function () {
-            //console.log("jump two");
-            if (this.isDead) {
-                if (this.speed.x < 5) {
-                    this.isDead = false;
-                    this.speed.x = 10;
-                }
-            }
-            if (Math.abs(this.position.y - this.ground) > 1) {
-                ECS.GameConfig.playerMode = ECS.PLAYMODE.JUMPING2;
-                //this.b_jumpTwo = true;
-            }
-            // else
-            // {
-            //     this.b_jumpTwo = false;
-            // }
-        };
-        GameCharacter.prototype.slide = function (isSlide) {
-            if (this.isDead) {
-                if (this.speed.x < 5) {
-                    this.isDead = false;
-                    this.speed.x = 10;
-                }
-            }
-            if (Math.abs(this.position.y - this.ground) <= 1) {
-                this.isSlide = isSlide;
-                if (isSlide)
-                    ECS.GameConfig.playerMode = ECS.PLAYMODE.SLIDE;
-                else
-                    ECS.GameConfig.playerMode = ECS.PLAYMODE.RUNNING;
-            }
-        };
-        GameCharacter.prototype.jump = function () {
-            //console.log("click jump");
-            if (this.isDead) {
-                if (this.speed.x < 5) {
-                    this.isDead = false;
-                    this.speed.x = 10;
-                }
-            }
-            // if(Math.abs(this.position.y-this.ground)>1)
-            // {
-            //     this.isJumped = true;
-            //     this.startJump = false;
-            // }
-            // else
-            // {
-            //     this.isJumped = false;
-            //     this.startJump = true;
-            // }
-            ECS.GameConfig.playerMode = ECS.PLAYMODE.JUMPING1;
-        };
-        GameCharacter.prototype.die = function () {
-            if (this.isDead)
-                return;
-            TweenLite.to(ECS.GameConfig.time, 0.5, {
-                speed: 0.1,
-                ease: Cubic.easeOut,
-                onComplete: function () {
-                    //FidoAudio.play('deathJingle');
-                    TweenLite.to(ECS.GameConfig.time, 2, {
-                        speed: 1,
-                        delay: 1
-                    });
-                }
-            });
-            this.isDead = true;
-            this.bounce = 0;
-            this.speed.x = 15;
-            this.speed.y = -15;
-            this.rotationSpeed = 0.3;
-            this.view.stop();
-        };
-        GameCharacter.prototype.boil = function () {
-            if (this.isDead)
-                return;
-            this.isDead = true;
-        };
-        GameCharacter.prototype.fall = function () {
-            this.startJump = false;
-            //this.b_jumpTwo = false;
-            this.isJumped = true;
-        };
-        GameCharacter.prototype.isAirbourne = function () { };
-        GameCharacter.prototype.stop = function () {
-            this.view.stop();
-        };
-        GameCharacter.prototype.resume = function () {
-            this.view.play();
-        };
-        return GameCharacter;
+        return DeviceDetect;
     }());
-    ECS.GameCharacter = GameCharacter;
-    var GameEnemy = /** @class */ (function () {
-        function GameEnemy() {
-            this.isEatNow = false;
-            this.position = new PIXI.Point();
-            // this.view = new PIXI.Sprite(PIXI.Texture.fromFrame("img/doroCat.png"));
-            // this.view.anchor.x = 0.5;
-            // this.view.anchor.y = 0.5;
-            // this.view.width = 150;
-            // this.view.height=150;
-            this.isHit = false;
-            this.width = 150;
-            this.height = 150;
-            this.speed = -10 + Math.random() * 20;
-            ;
-            this.moveingFrames = [
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0001.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0002.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0003.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0004.png"),
-            ];
-            this.stealFrames = [
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0001.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0002.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0003.png"),
-                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0004.png")
-            ];
-            this.view = new PIXI.MovieClip(this.moveingFrames);
-            this.view.animationSpeed = 0.23;
-            this.view.anchor.x = 0.5;
-            this.view.anchor.y = 0.5;
-            this.view.height = 150;
-            this.view.width = 150;
-        }
-        GameEnemy.prototype.reset = function () {
-            if (this.explosion) {
-                this.view.removeChild(this.explosion);
-                this.explosion.reset();
-            }
-            this.isHit = false;
-            this.view.width = 157;
-        };
-        GameEnemy.prototype.hit = function () {
-            if (this.isHit)
-                return;
-            this.isHit = true;
-            if (!this.explosion)
-                this.explosion = new ECS.Explosion();
-            this.explosion.explode();
-            this.view.addChild(this.explosion);
-            this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"));
-        };
-        GameEnemy.prototype.update = function () {
-            this.view.animationSpeed = 0.23 * ECS.GameConfig.time.DELTA_TIME;
-            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
-            if (!this.isEatNow) {
-                this.position.x += this.speed * Math.sin(ECS.GameConfig.time.DELTA_TIME);
-                ECS.GameConfig.tmpTimeClockStart1 = ECS.GameConfig.time.currentTime;
-            }
-            else {
-                ECS.GameConfig.tmpTimeClockEnd1 = ECS.GameConfig.time.currentTime;
-                if (ECS.GameConfig.timeClock1() > 2000) {
-                    this.isEatNow = false;
-                    this.view.textures = this.moveingFrames;
-                }
-            }
-            this.view.position.y = this.position.y;
-        };
-        return GameEnemy;
-    }());
-    ECS.GameEnemy = GameEnemy;
-    var Partical = /** @class */ (function () {
-        function Partical() {
-            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("starPops0004.png"));
-            this.anchor.x = 0.5;
-            this.anchor.y = 0.5;
-            this.speed = new PIXI.Point();
-        }
-        return Partical;
-    }());
-    ECS.Partical = Partical;
-    Partical.prototype = Object.create(PIXI.Sprite.prototype);
-    var GameCharacterTrail = /** @class */ (function () {
-        function GameCharacterTrail(stage) {
-            this.stage = stage;
-            this.target = new PIXI.Point();
-            this.particals = [];
-            this.particalPool = new ECS.GameObjectPool(Partical);
-            this.max = 100;
-            this.count = 0;
-        }
-        GameCharacterTrail.prototype.update = function () {
-            if (this.target.isFlying && !this.target.isDead) {
-                this.count++;
-                if (this.count % 3) {
-                    var partical = this.particalPool.getObject();
-                    this.stage.addChild(partical);
-                    partical.position.x = this.target.view.position.x + (Math.random() * 10) - 5 - 20;
-                    partical.position.y = this.target.view.position.y + 50;
-                    partical.direction = 0;
-                    partical.dirSpeed = Math.random() > 0.5 ? -0.1 : 0.1;
-                    partical.sign = this.particals.length % 2 ? -1 : 1;
-                    partical.scaly = Math.random() * 2 - 1; // - this.target.speed.x * 0.3;
-                    partical.speed.y = this.target.accel * 3;
-                    partical.alphay = 2;
-                    partical.rotation = Math.random() * Math.PI * 2;
-                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
-                    this.particals.push(partical);
-                }
-            }
-            for (var i = 0; i < this.particals.length; i++) {
-                var partical = this.particals[i];
-                partical.dirSpeed += 0.003 * partical.sign;
-                if (partical.dirSpeed > 2)
-                    partical.dirSpeed = 2;
-                partical.direction += partical.dirSpeed;
-                partical.speed.x = Math.sin(partical.direction); // *= 1.1;
-                partical.speed.y = Math.cos(partical.direction);
-                partical.position.x += partical.speed.x * 5 * partical.scaly;
-                partical.position.y += partical.speed.y * 3;
-                partical.alphay *= 0.85;
-                partical.rotation += partical.speed.x * 0.1;
-                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
-                if (partical.alpha < 0.01) {
-                    this.stage.removeChild(partical);
-                    this.particals.splice(i, 1);
-                    //this.particalPool.returnObject(partical);
-                    i--;
-                }
-            }
-        };
-        return GameCharacterTrail;
-    }());
-    ECS.GameCharacterTrail = GameCharacterTrail;
-    var ParticalFire = /** @class */ (function () {
-        function ParticalFire() {
-            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("fireCloud.png"));
-            this.anchor.x = 0.5;
-            this.anchor.y = 0.5;
-            this.speed = new PIXI.Point();
-        }
-        return ParticalFire;
-    }());
-    ECS.ParticalFire = ParticalFire;
-    ParticalFire.prototype = Object.create(PIXI.Sprite.prototype);
-    var GameCharacterTrailFire = /** @class */ (function () {
-        function GameCharacterTrailFire(stage) {
-            this.stage = stage;
-            this.target = new PIXI.Point();
-            this.particals = [];
-            this.particalPool = new ECS.GameObjectPool(ParticalFire);
-            this.max = 100;
-            this.count = 0;
-            this.mOffset = PIXI.mat3.create(); //PIXI.mat3.identity(PIXI.mat3.create());
-            this.mOffset[2] = -30; //this.position.x;
-            this.mOffset[5] = 30; //this.position.y;
-            this.spare = PIXI.mat3.create(); //PIXI.mat3.identity();
-        }
-        GameCharacterTrailFire.prototype.update = function () {
-            //PIXI.Rope.prototype.updateTransform.call(this);
-            if (this.target.isDead) {
-                this.mOffset;
-                PIXI.mat3.multiply(this.mOffset, this.target.view.localTransform, this.spare);
-                this.count++;
-                if (this.count % 3) {
-                    var partical = this.particalPool.getObject();
-                    this.stage.addChild(partical);
-                    partical.position.x = this.spare[2];
-                    partical.position.y = this.spare[5];
-                    partical.speed.x = 1 + Math.random() * 2;
-                    partical.speed.y = 1 + Math.random() * 2;
-                    partical.speed.x *= -1;
-                    partical.speed.y *= 1;
-                    partical.alphay = 2;
-                    partical.rotation = Math.random() * Math.PI * 2;
-                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
-                    this.particals.push(partical);
-                }
-            } // add partical!
-            for (var i = 0; i < this.particals.length; i++) {
-                var partical = this.particals[i];
-                partical.scale.x = partical.scale.y *= 1.02;
-                partical.alphay *= 0.85;
-                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
-                partical.position.x += partical.speed.x * 2;
-                partical.position.y += partical.speed.y * 2;
-                if (partical.alpha < 0.01) {
-                    this.stage.removeChild(partical);
-                    this.particals.splice(i, 1);
-                    //this.particalPool.returnObject(partical);
-                    i--;
-                }
-            }
-            ;
-        };
-        return GameCharacterTrailFire;
-    }());
-    ECS.GameCharacterTrailFire = GameCharacterTrailFire;
-})(ECS || (ECS = {}));
+    Utils.DeviceDetect = DeviceDetect;
+})(Utils || (Utils = {}));
 /* =========================================================================
  *
  *  GameConfig.ts
  *  config file
  *
  * ========================================================================= */
+/// <reference path="./HashSet.ts" />
 var ECS;
 (function (ECS) {
     var GameRunTime = /** @class */ (function () {
@@ -983,50 +352,14 @@ var ECS;
         GameConfig.timeClock1 = function () {
             return this.tmpTimeClockEnd1 - this.tmpTimeClockStart1;
         };
-        GameConfig.resize = function () {
-            window.scrollTo(0, 0);
-            var h = 640;
-            var width = window.innerWidth || document.body.clientWidth;
-            var height = window.innerHeight || document.body.clientHeight;
-            var ratio = height / h;
-            if (this.game) {
-                var view = this.game.view.renderer.view;
-                view.style.height = h * ratio + "px";
-                var newWidth = (width / ratio);
-                view.style.width = width + "px";
-                // this.logo.position.x = newWidth / 2;
-                // this.logo.position.y = h / 2 - 20;
-                // if (black) {
-                //     black.scale.x = newWidth / 16;
-                //     black.scale.y = h / 16;
-                // }
-                // this.countdown.position.x = newWidth / 2;
-                // this.countdown.position.y = h / 2;
-                this.game.view.resize(newWidth, h);
-                // pauseButton.position.x = newWidth - 60;
-                // pauseButton.position.y = h - 60;
-                // pauseScreen.position.x = (newWidth * 0.5);
-                // pauseScreen.position.y = h * 0.5;
-                // resumeButton.position.x = (newWidth * 0.5);
-                // resumeButton.position.y = (h * 0.5);
-                // restartButton.position.x = (newWidth * 0.5) + 125;
-                // restartButton.position.y = (h * 0.5);
-                // soundOffButton.position.x = (newWidth * 0.5) - 125;
-                // soundOffButton.position.y = (h * 0.5);
-                // soundOnButton.position.x = (newWidth * 0.5) - 125;
-                // soundOnButton.position.y = (h * 0.5);
-            }
-            this.width = (width / ratio);
-            this.height = h;
-        };
+        GameConfig.width = 800;
+        GameConfig.height = 600;
         GameConfig.xOffset = 0;
         GameConfig.high_mode = true;
         GameConfig.camera = new PIXI.Point();
-        GameConfig.bundleId = "rw.raymond.wang";
+        GameConfig.localID = "rw.raymond.wang";
         GameConfig.newHighScore = false;
         GameConfig.time = new GameRunTime();
-        GameConfig.width = 800;
-        GameConfig.height = 600;
         GameConfig.interactive = true;
         GameConfig.specialMode = SPECIALMODE.NONE;
         GameConfig.isOnPlat = false;
@@ -1036,8 +369,442 @@ var ECS;
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
- *  GameItems.ts
- *  item
+ *  System.ts
+ *  system using for controlling the game
+ *
+ * ========================================================================= */
+/// <reference path="./HashSet.ts" />
+/// <reference path="./Utils.ts" />
+/// <reference path="./GameConfig.ts" />
+var ECS;
+(function (ECS) {
+    var System = /** @class */ (function () {
+        function System(name) {
+            this.name = name;
+        }
+        System.prototype.Init = function () {
+            console.log("[" + this.name + "]System initialization!");
+        };
+        System.prototype.Execute = function () {
+            console.log("[" + this.name + "]System Execute!");
+        };
+        return System;
+    }());
+    ECS.System = System;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  Entity.js
+ *  Each entity has an unique ID
+ *
+ * ========================================================================= */
+/// <reference path="./Component.ts" />
+/// <reference path="./HashSet.ts" />
+var ECS;
+(function (ECS) {
+    var Entity = /** @class */ (function () {
+        function Entity(name) {
+            this.name = name;
+            this.id = (+new Date()).toString(16) +
+                (Math.random() * 100000000 | 0).toString(16) +
+                this.count;
+            this.count++;
+            this.components = new Utils.HashSet();
+        }
+        Entity.prototype.addComponent = function (component) {
+            this.components.set(component.name, component);
+            //console.log("add ["+component.name+"] component");
+        };
+        Entity.prototype.removeComponent = function (component) {
+            var name = component.name;
+            var deletOrNot = this.components["delete"](name);
+            if (deletOrNot) {
+                console.log("delete [" + name + "] success!");
+            }
+            else {
+                console.log("delete [" + name + "] fail! not exist!");
+            }
+        };
+        return Entity;
+    }());
+    ECS.Entity = Entity;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameLocalData.ts
+ *  local storage for game
+ *
+ * ========================================================================= */
+var ECS;
+(function (ECS) {
+    var GameLocalData = /** @class */ (function () {
+        function GameLocalData(id) {
+            this.id = id;
+        }
+        GameLocalData.prototype.store = function (key, value) {
+            localStorage.setItem(this.id + '.' + key, value);
+        };
+        GameLocalData.prototype.get = function (key) {
+            return localStorage.getItem(this.id + '.' + key) || 0;
+        };
+        GameLocalData.prototype.remove = function (key) {
+            localStorage.removeItem(this.id + '.' + key);
+        };
+        GameLocalData.prototype.reset = function () {
+            for (var i in localStorage) {
+                if (i.indexOf(this.id + '.') !== -1)
+                    localStorage.removeItem(i);
+            }
+        };
+        return GameLocalData;
+    }());
+    ECS.GameLocalData = GameLocalData;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameAudio.ts
+ *  music for game(using cocoonjs and howl)
+ *
+ * ========================================================================= */
+/// <reference path="./GameLocalData.ts" />
+/// <reference path="./GameConfig.ts" />
+/// <reference path="./Utils.ts" />
+var ECS;
+(function (ECS) {
+    var GameAudio = /** @class */ (function () {
+        function GameAudio() {
+            this.soundPool = {};
+            this.DEFAULT_FADE_OUT_TIME = 1;
+            this.DEFAULT_FADE_IN_TIME = 1;
+            this.MUTE_ALL = false;
+            this.device = new Utils.DeviceDetect();
+            this.localData = new ECS.GameLocalData(ECS.GameConfig.localID);
+            this.soundList = [{
+                    src: 'audio/mainLoop',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'gameMusic'
+                }];
+            this.init();
+        }
+        GameAudio.prototype.init = function () {
+            if (this.device.cocoonJS === true) {
+                for (var i = 0; i < this.soundList.length; i++) {
+                    var cSound = this.soundList[i];
+                    switch (cSound.type) {
+                        case 'music':
+                            CocoonJS.App.markAsMusic(cSound.src + ".ogg");
+                            var music = document.createElement('audio');
+                            music.src = cSound.src + ".ogg";
+                            music.loop = cSound.loop;
+                            cSound.audio = new CocoonJS.Music().setAudio(music);
+                            cSound.audio.volume(cSound.volume);
+                            this.soundPool[cSound.name] = cSound;
+                            if (cSound.autoPlay === true)
+                                this.soundPool[cSound.name].audio.play();
+                            break;
+                        case 'sfx':
+                            var sfx = new Audio();
+                            sfx.src = cSound.src + ".ogg";
+                            cSound.audio = new CocoonJS.Audio().setAudio(sfx);
+                            cSound.audio.volume(cSound.volume);
+                            this.soundPool[cSound.name] = cSound;
+                            break;
+                    }
+                }
+            }
+            else {
+                for (var i = 0; i < this.soundList.length; i++) {
+                    var cSound = this.soundList[i];
+                    cSound.audio = new Howl({
+                        urls: [cSound.src + ".mp3"],
+                        autoplay: cSound.autoPlay,
+                        loop: cSound.loop,
+                        volume: cSound.volume,
+                        onload: function () {
+                            //alert('loaded');
+                        },
+                        onend: function () {
+                            //alert('finished playing sound');
+                        },
+                        onloaderror: function () {
+                            alert('ERROR : Failed to load ' + cSound.src + ".m4a");
+                        },
+                        onplay: function () {
+                            //alert('playing');
+                        }
+                    });
+                    this.soundPool[cSound.name] = cSound;
+                }
+            }
+            if (this.localData.get('gameMuted') === 'true')
+                this.muteAll();
+        };
+        GameAudio.prototype.isMuted = function () {
+            return this.MUTE_ALL;
+        };
+        GameAudio.prototype.muteAll = function () {
+            this.MUTE_ALL = true;
+            this.localData.store('gameMuted', true);
+            if (this.device.cocoonJS === true) {
+                for (var sKey in this.soundPool) {
+                    var cSound = this.soundPool[sKey];
+                    var holder = {
+                        volume: cSound.audio.getVolume()
+                    };
+                    this.muteOneSound(cSound, holder);
+                }
+            }
+            else {
+                var cHolder = {
+                    volume: 1
+                };
+                TweenLite.to(cHolder, 1, {
+                    volume: 0,
+                    onUpdate: function () {
+                        Howler.volume(this.target.volume);
+                    },
+                    onComplete: function () {
+                        Howler.mute();
+                    }
+                });
+            }
+        };
+        GameAudio.prototype.muteOneSound = function (cSound, holder) {
+            TweenLite.to(holder, 1, {
+                volume: 0,
+                onUpdate: function () {
+                    cSound.audio.volume(this.target.volume);
+                }
+            });
+        };
+        GameAudio.prototype.unMuteOneSound = function (cSound, holder) {
+            TweenLite.to(holder, 1, {
+                volume: cSound.volume,
+                onUpdate: function () {
+                    cSound.audio.volume(this.target.volume);
+                }
+            });
+        };
+        GameAudio.prototype.unMuteAll = function () {
+            this.MUTE_ALL = false;
+            this.localData.store('gameMuted', false);
+            if (this.device.cocoonJS === true) {
+                for (var sKey in this.soundPool) {
+                    var cSound = this.soundPool[sKey];
+                    this.unMuteOneSound(cSound, {
+                        volume: 0
+                    });
+                }
+            }
+            else {
+                var cHolder = {
+                    volume: 0
+                };
+                Howler.unmute();
+                TweenLite.to(cHolder, 1, {
+                    volume: 1,
+                    onUpdate: function (cObject, sProperty) {
+                        Howler.volume(this.target.volume);
+                    }
+                });
+            }
+        };
+        GameAudio.prototype.play = function (id) {
+            if (this.soundPool.hasOwnProperty(id)) {
+                this.soundPool[id].audio.play();
+            }
+            else {
+                console.log("WARNING :: Couldn't find sound '" + id + "'.");
+            }
+        };
+        GameAudio.prototype.fadeOut = function (sKey) {
+            var cSound = this.soundPool[sKey];
+            var holder = {
+                volume: 0
+            };
+            this.muteOneSound(cSound, holder);
+        };
+        GameAudio.prototype.fadeIn = function (id, time) {
+            if (!this.soundExists(id))
+                return;
+            var cSound = this.soundPool[id];
+            var nFadeInTime = time || this.DEFAULT_FADE_IN_TIME;
+            var cHolder = {
+                volume: 0
+            };
+            TweenLite.to(cHolder, nFadeInTime, {
+                volume: cSound.maxVolume,
+                onUpdate: function (cObject, sProperty) {
+                    this.setVolume(id, this.target.volume);
+                }
+            });
+        };
+        GameAudio.prototype.soundExists = function (id) {
+            return this.soundPool.hasOwnProperty(id);
+        };
+        GameAudio.prototype.setVolume = function (id, volume) {
+            if (!this.soundExists(id))
+                return;
+            if (this.MUTE_ALL === true) {
+                this.soundPool[id].volume = volume;
+            }
+            else {
+                this.soundPool[id].audio.volume(volume);
+            }
+        };
+        GameAudio.prototype.stop = function (id) {
+            this.soundPool[id].audio.stop();
+        };
+        return GameAudio;
+    }());
+    ECS.GameAudio = GameAudio;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameBackGround.ts
+ *  game view scene - background
+ *
+ * ========================================================================= */
+/// <reference path="./System.ts" />
+var ECS;
+(function (ECS) {
+    var BackGroundElement = /** @class */ (function () {
+        function BackGroundElement(texture, y, owner, width) {
+            if (width === void 0) { width = 940; }
+            this.sprites = [];
+            this.spriteWidth = texture.width - 5;
+            this.spriteHeight = texture.height - 1;
+            var amount = Math.ceil(width / this.spriteWidth);
+            if (amount < 3)
+                amount = 3;
+            for (var i = 0; i < amount; i++) {
+                var sprite = new PIXI.Sprite(texture);
+                //sprite.position.y = y;
+                owner.addChild(sprite);
+                this.sprites.push(sprite);
+            }
+            ;
+            this.speed = 1;
+        }
+        BackGroundElement.prototype.setPosition = function (position) {
+            var h = this.spriteWidth;
+            for (var i = 0; i < this.sprites.length; i++) {
+                var pos = -position * this.speed;
+                pos += i * h;
+                pos %= h * this.sprites.length;
+                pos += h / 2;
+                this.sprites[i].position.x = pos;
+            }
+            ;
+        };
+        return BackGroundElement;
+    }());
+    ECS.BackGroundElement = BackGroundElement;
+    var GameBackGroundSystem = /** @class */ (function (_super) {
+        __extends(GameBackGroundSystem, _super);
+        function GameBackGroundSystem() {
+            var _this = _super.call(this, "view-background") || this;
+            //PIXI.DisplayObjectContainer.call( this );
+            _this.BackGroundContainer = new PIXI.Container();
+            _this.width = ECS.GameConfig.width;
+            _this.scrollPosition = 1500;
+            var bgTex = PIXI.loader.resources["img/bg_up.png"].texture;
+            _this.bgTex = new BackGroundElement(bgTex, -195, _this.BackGroundContainer);
+            _this.tree1 = PIXI.Sprite.fromFrame("tree1.png");
+            _this.tree1.anchor.x = 0.5;
+            _this.tree1.anchor.y = 0.5;
+            _this.tree1.width = 200;
+            _this.tree1.height = 350;
+            _this.tree1.position.y = _this.bgTex.spriteHeight - _this.tree1.height / 2;
+            _this.BackGroundContainer.addChild(_this.tree1);
+            _this.tree2 = PIXI.Sprite.fromFrame("tree2.png");
+            _this.tree2.anchor.x = 0.5;
+            _this.tree2.anchor.y = 0.5;
+            _this.tree2.width = 200;
+            _this.tree2.height = 350;
+            _this.tree2.position.y = _this.bgTex.spriteHeight - _this.tree2.height / 2;
+            _this.BackGroundContainer.addChild(_this.tree2);
+            _this.cloud1 = PIXI.Sprite.fromFrame("cloud1.png");
+            _this.cloud1.position.y = ECS.GameConfig.height / 5;
+            _this.BackGroundContainer.addChild(_this.cloud1);
+            _this.cloud2 = PIXI.Sprite.fromFrame("cloud2.png");
+            _this.cloud2.position.y = ECS.GameConfig.height / 8;
+            _this.BackGroundContainer.addChild(_this.cloud2);
+            ;
+            _this.bgTex.speed = 1 / 2;
+            ECS.GameConfig.app.ticker.add(function (delta) {
+                // console.log("background run!");
+                _this.scrollPosition = ECS.GameConfig.camera.x + 8000;
+                var intervalDistance = ECS.GameConfig.width;
+                var treePos = -_this.scrollPosition * 1.5 / 2;
+                treePos %= _this.width + intervalDistance;
+                treePos += _this.width + intervalDistance;
+                treePos -= _this.tree1.width / 2;
+                _this.tree1.position.x = treePos - ECS.GameConfig.xOffset;
+                var treePos2 = -(_this.scrollPosition + _this.width / 2) * 1.5 / 2;
+                treePos2 %= _this.width + intervalDistance;
+                treePos2 += _this.width + intervalDistance;
+                treePos2 -= _this.tree2.width / 2;
+                _this.tree2.position.x = treePos2 - ECS.GameConfig.xOffset;
+                var cloud1Pos = -_this.scrollPosition * 1.5 / 2;
+                cloud1Pos %= _this.width + intervalDistance;
+                cloud1Pos += _this.width + intervalDistance;
+                cloud1Pos -= _this.cloud1.width / 2;
+                _this.cloud1.position.x = cloud1Pos - ECS.GameConfig.xOffset;
+                var cloud2Pos = -(_this.scrollPosition + _this.width / 2) * 1.5 / 2;
+                cloud2Pos %= _this.width + intervalDistance;
+                cloud2Pos += _this.width + intervalDistance;
+                cloud2Pos -= _this.cloud2.width / 2;
+                _this.cloud2.position.x = cloud2Pos - ECS.GameConfig.xOffset;
+                _this.bgTex.setPosition(_this.scrollPosition);
+            });
+            return _this;
+        }
+        return GameBackGroundSystem;
+    }(ECS.System));
+    ECS.GameBackGroundSystem = GameBackGroundSystem;
+    //GameBackground.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
+    // GameBackground.prototype.updateTransform = function()
+    // {
+    //     this.scrollPosition = GameConfig.camera.x + 8000;
+    //     var treePos = -this.scrollPosition * 1.5/2;
+    //     treePos %= this.width + 556;
+    //     treePos += this.width + 556;
+    //     treePos -= this.tree1.width/2;
+    //     this.tree1.position.x = treePos -GameConfig.xOffset;
+    //     var treePos2 = -(this.scrollPosition + this.width/2) * 1.5/2;
+    //     treePos2 %= this.width + 556;
+    //     treePos2 += this.width + 556;
+    //     treePos2 -= this.tree2.width/2;
+    //     this.tree2.position.x = treePos2 -GameConfig.xOffset;
+    //     var cloud1Pos = -this.scrollPosition * 1.5/2;
+    //     cloud1Pos %= this.width + 556;
+    //     cloud1Pos += this.width + 556;
+    //     cloud1Pos -= this.cloud1.width/2;
+    //     this.cloud1.position.x = cloud1Pos -GameConfig.xOffset;
+    //     var cloud2Pos = -(this.scrollPosition + this.width/2) * 1.5/2;
+    //     cloud2Pos %= this.width + 556;
+    //     cloud2Pos += this.width + 556;
+    //     cloud2Pos -= this.cloud2.width/2;
+    //     this.cloud2.position.x = cloud2Pos -GameConfig.xOffset;
+    //     this.bgTex.setPosition(this.scrollPosition);
+    //     //this.rearSilhouette.setPosition(this.scrollPosition);
+    //     //this.rearCanopy.setPosition(this.scrollPosition);
+    //    // this.farCanopy.setPosition(this.scrollPosition);
+    //     //this.frontSilhouette.setPosition(this.scrollPosition);
+    //     //this.roofLeaves.setPosition(this.scrollPosition);
+    //     //this.vines.setPosition(this.scrollPosition);
+    //     PIXI.DisplayObjectContainer.prototype.updateTransform.call( this );
+    // }
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameUI.ts
+ *  game ui panel
  *
  * ========================================================================= */
 /// <reference path="./GameConfig.ts" />
@@ -1050,17 +817,156 @@ var ECS;
         var offset = (total % 3) - 1;
         for (var i = 0; i < total; i++) {
             text += nArray[i];
-            //if((i - offset) % 3 == 0 && i != total-1)text+=",";	
         }
         return text;
     }
+    //UIPanel
+    var GameUIPanelUpRight = /** @class */ (function () {
+        function GameUIPanelUpRight() {
+            this.ratio = 0.6;
+            this.uiContainer = new PIXI.Container();
+            this.uiList = ["Score.png",
+                "Best Score.png",
+                "Distance.png",
+                "Pause.png"];
+            this.startXList = new Array();
+            this.startYList = new Array();
+            var allSpritesLength = 0;
+            this.uiSprites = [];
+            for (var i = 0; i < this.uiList.length; i++) {
+                this.uiList[i] = PIXI.Texture.fromFrame(this.uiList[i]);
+                this.uiSprites[i] = new PIXI.Sprite(this.uiList[i]);
+                this.uiSprites[i].scale.x = this.ratio;
+                this.uiSprites[i].scale.y = this.ratio;
+                allSpritesLength += this.uiSprites[i].width;
+            }
+            this.startX = ECS.GameConfig.width - allSpritesLength;
+            for (var i = 0; i < this.uiList.length; i++) {
+                this.startXList.push(this.startX);
+                this.startYList.push(this.uiSprites[i].height);
+                this.uiContainer.addChild(this.uiSprites[i]);
+                this.uiSprites[i].position.x = this.startX;
+                this.startX += this.uiSprites[i].width;
+            }
+        }
+        return GameUIPanelUpRight;
+    }());
+    ECS.GameUIPanelUpRight = GameUIPanelUpRight;
+    var NumberUI = /** @class */ (function () {
+        function NumberUI(startXList, startYList) {
+            this.currentScore = 0;
+            this.ratio = 1;
+            this.xOffset = 15;
+            this.yOffset = 15;
+            this.ratio = 0.3;
+            this.startX = startXList[1];
+            this.startY = startYList[0];
+            this.container = new PIXI.Container();
+            this.tmpList = [];
+            this.numberList = {
+                0: "Number-0.png",
+                1: "Number-1.png",
+                2: "Number-2.png",
+                3: "Number-3.png",
+                4: "Number-4.png",
+                5: "Number-5.png",
+                6: "Number-6.png",
+                7: "Number-7.png",
+                8: "Number-8.png",
+                9: "Number-9.png"
+            };
+            for (var s in this.numberList)
+                this.numberList[s] = PIXI.Texture.fromFrame(this.numberList[s]);
+            this.numberSprite = [];
+            for (var i = 0; i < 10; i++) {
+                this.numberSprite[i] = new PIXI.Sprite(this.numberList[i]);
+                this.numberSprite[i].scale.x = this.ratio;
+                this.numberSprite[i].scale.y = this.ratio;
+            }
+            this.setScore(0);
+        }
+        NumberUI.prototype.resetScore = function () {
+            for (var i = 0; i < this.tmpList.length; i++) {
+                this.container.removeChild(this.tmpList[i]);
+            }
+        };
+        NumberUI.prototype.setScore = function (score) {
+            this.currentScore = score;
+            this.resetScore();
+            var split = formatScore(score).split("");
+            var position = this.startX - this.xOffset;
+            var allLength = 0;
+            //count all number length
+            for (var i = 0; i < split.length; i++) {
+                var l = this.numberList[split[i]].width * this.ratio;
+                allLength += l;
+            }
+            position -= allLength;
+            for (var i = 0; i < split.length; i++) {
+                var ns = this.numberSprite[i];
+                ns.visible = true;
+                ns.setTexture(this.numberList[split[i]]);
+                ns.position.x = position;
+                ns.position.y = this.startY / 2 - this.yOffset;
+                position += ns.width;
+                this.tmpList.push(ns);
+                this.container.addChild(ns);
+            }
+        };
+        return NumberUI;
+    }());
+    ECS.NumberUI = NumberUI;
+    var Score = /** @class */ (function (_super) {
+        __extends(Score, _super);
+        function Score(startXList, startYList) {
+            return _super.call(this, startXList, startYList) || this;
+        }
+        return Score;
+    }(NumberUI));
+    ECS.Score = Score;
+    var BestScore = /** @class */ (function (_super) {
+        __extends(BestScore, _super);
+        function BestScore(startXList, startYList) {
+            var _this = _super.call(this, startXList, startYList) || this;
+            _this.startX = startXList[2];
+            _this.LocalData = new ECS.GameLocalData(ECS.GameConfig.localID);
+            _this.hightScore = _this.LocalData.get('highscore') || 0;
+            _this.update();
+            return _this;
+        }
+        BestScore.prototype.update = function () {
+            this.setScore(this.LocalData.get('highscore') || 0);
+        };
+        return BestScore;
+    }(NumberUI));
+    ECS.BestScore = BestScore;
+    var DistanceScore = /** @class */ (function (_super) {
+        __extends(DistanceScore, _super);
+        function DistanceScore(startXList, startYList) {
+            var _this = _super.call(this, startXList, startYList) || this;
+            _this.startX = startXList[3];
+            _this.setScore(0);
+            return _this;
+        }
+        return DistanceScore;
+    }(NumberUI));
+    ECS.DistanceScore = DistanceScore;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameItems.ts
+ *  item
+ *
+ * ========================================================================= */
+/// <reference path="./GameConfig.ts" />
+var ECS;
+(function (ECS) {
     var PickUp = /** @class */ (function () {
         function PickUp() {
-            if (!this.pickupTextures)
-                this.pickupTextures = ["pickup_01.png", "pickup_02.png", "pickup_03.png", "pickup_04.png", "pickup_05.png", "pickup_06.png", "pickup_07.png", "pickup_08.png"];
+            this.pickupTextures = ["pickup_01.png", "pickup_02.png", "pickup_03.png", "pickup_04.png", "pickup_05.png", "pickup_06.png", "pickup_07.png", "pickup_08.png"];
             this.position = new PIXI.Point();
-            this.view = new PIXI.DisplayObjectContainer();
-            this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.pickupTextures[Math2.randomInt(0, this.pickupTextures.length - 1)]));
+            this.view = new PIXI.Container();
+            this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.pickupTextures[Math.floor(Math.random() * this.pickupTextures.length)]));
             this.clip.anchor.x = 0.5;
             this.clip.anchor.y = 0.5;
             this.shine = PIXI.Sprite.fromFrame("pickupShine.png");
@@ -1093,25 +999,6 @@ var ECS;
         return PickUp;
     }());
     ECS.PickUp = PickUp;
-    var PowerBar = /** @class */ (function () {
-        function PowerBar() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.barBG = PIXI.Sprite.fromFrame("bulletTime_back.png");
-            this.addChild(this.barBG);
-            this.barBG.position.x = 20;
-            this.barBG.position.y = 30;
-            this.bar = PIXI.Sprite.fromFrame("powerFillBar.png");
-            this.addChild(this.bar);
-            this.bar.position.x = 20;
-            this.bar.position.y = 30;
-            this.frame = PIXI.Sprite.fromFrame("bulletTime_BG.png");
-            this.addChild(this.frame);
-            this.position.x = 100;
-        }
-        return PowerBar;
-    }());
-    ECS.PowerBar = PowerBar;
-    PowerBar.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
     var Specialfood = /** @class */ (function () {
         function Specialfood() {
             PIXI.DisplayObjectContainer.call(this);
@@ -1144,661 +1031,111 @@ var ECS;
     Specialfood.prototype.setFoodPic = function (ui, posx) {
         ui.position.x = this.startX + posx;
     };
-    var PlayUIPanel = /** @class */ (function () {
-        function PlayUIPanel() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.playUI = ["Score.png",
-                "Best Score.png",
-                "Distance.png",
-                "Pause.png"];
-            for (var i = 0; i < this.playUI.length; i++) {
-                this.playUI[i] = PIXI.Texture.fromFrame(this.playUI[i]);
-            }
-            this.startX = 600;
-            this.digits = [];
-            for (var i = 0; i < this.playUI.length; i++) {
-                this.digits[i] = new PIXI.Sprite(this.playUI[i]);
-                this.digits[i].scale.x = 0.6;
-                this.digits[i].scale.y = 0.6;
-                this.addChild(this.digits[i]);
-                this.digits[i].position.x = this.startX;
-                this.startX += this.digits[i].width;
-            }
-        }
-        return PlayUIPanel;
-    }());
-    ECS.PlayUIPanel = PlayUIPanel;
-    PlayUIPanel.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    var PlayControlPanel = /** @class */ (function () {
-        function PlayControlPanel() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.playUI = ["Score.png",
-                "Best Score.png",
-                "Distance.png",
-                "Pause.png"];
-            for (var i = 0; i < this.playUI.length; i++) {
-                this.playUI[i] = PIXI.Texture.fromFrame(this.playUI[i]);
-            }
-            this.startX = 600;
-            this.digits = [];
-            for (var i = 0; i < this.playUI.length; i++) {
-                this.digits[i] = new PIXI.Sprite(this.playUI[i]);
-                this.digits[i].scale.x = 0.6;
-                this.digits[i].scale.y = 0.6;
-                this.addChild(this.digits[i]);
-                this.digits[i].position.x = this.startX;
-                this.startX += this.digits[i].width;
-            }
-        }
-        return PlayControlPanel;
-    }());
-    ECS.PlayControlPanel = PlayControlPanel;
-    PlayControlPanel.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    var Score = /** @class */ (function () {
-        function Score() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.ratio = 0;
-            this.glyphs = {
-                0: "Number-0.png",
-                1: "Number-1.png",
-                2: "Number-2.png",
-                3: "Number-3.png",
-                4: "Number-4.png",
-                5: "Number-5.png",
-                6: "Number-6.png",
-                7: "Number-7.png",
-                8: "Number-8.png",
-                9: "Number-9.png"
-            };
-            for (var s in this.glyphs)
-                this.glyphs[s] = PIXI.Texture.fromFrame(this.glyphs[s]);
-            this.digits = [];
-            for (var i = 0; i < 8; i++) {
-                this.digits[i] = new PIXI.Sprite(this.glyphs[i]);
-                this.addChild(this.digits[i]);
-            }
-            this.setScore(formatScore(12345));
-        }
-        return Score;
-    }());
-    ECS.Score = Score;
-    Score.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    Score.prototype.setScore = function (score) {
-        var split = formatScore(score).split("");
-        var position = 0;
-        var gap = -10;
-        for (var i = 0; i < split.length; i++) {
-            var digit = this.digits[i];
-            digit.visible = true;
-            digit.setTexture(this.glyphs[split[i]]);
-            digit.position.x = position;
-            position += digit.width + gap;
-        }
-        for (var i = 0; i < this.digits.length; i++) {
-            this.digits[i].position.x -= position;
-        }
-        for (var i = split.length; i < this.digits.length; i++) {
-            this.digits[i].visible = false;
-        }
-    };
-    Score.prototype.jump = function () {
-        this.ratio = 2.2;
-    };
-    var BestScore = /** @class */ (function () {
-        function BestScore() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.LocalStorage = new Fido.LocalStorage(ECS.GameConfig.bundleId);
-            this.ratio = 0;
-            this.glyphs = {
-                0: "Number-0.png",
-                1: "Number-1.png",
-                2: "Number-2.png",
-                3: "Number-3.png",
-                4: "Number-4.png",
-                5: "Number-5.png",
-                6: "Number-6.png",
-                7: "Number-7.png",
-                8: "Number-8.png",
-                9: "Number-9.png"
-            };
-            for (var s in this.glyphs)
-                this.glyphs[s] = PIXI.Texture.fromFrame(this.glyphs[s]);
-            this.digits = [];
-            for (var i = 0; i < 8; i++) {
-                this.digits[i] = new PIXI.Sprite(this.glyphs[i]);
-                this.addChild(this.digits[i]);
-            }
-        }
-        return BestScore;
-    }());
-    ECS.BestScore = BestScore;
-    BestScore.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    BestScore.prototype.setScore = function (score) {
-        var split = formatScore(score).split("");
-        var position = 0;
-        var gap = -10;
-        for (var i = 0; i < split.length; i++) {
-            var digit = this.digits[i];
-            digit.visible = true;
-            digit.setTexture(this.glyphs[split[i]]);
-            digit.position.x = position;
-            position += digit.width + gap;
-        }
-        for (var i = 0; i < this.digits.length; i++) {
-            this.digits[i].position.x -= position;
-        }
-        for (var i = split.length; i < this.digits.length; i++) {
-            this.digits[i].visible = false;
-        }
-    };
-    BestScore.prototype.jump = function () {
-        this.ratio = 2.2;
-    };
-    BestScore.prototype.update = function () {
-        this.setScore(Math.round(parseInt(this.LocalStorage.get('highscore'))) || 0);
-    };
-    var Splash = /** @class */ (function () {
-        function Splash() {
-            this.textures = [PIXI.Texture.fromFrame("lavaFrame_01.png"),
-                PIXI.Texture.fromFrame("lavaFrame_02.png"),
-                PIXI.Texture.fromFrame("lavaFrame_03.png"),
-                PIXI.Texture.fromFrame("lavaFrame_04.png"),
-                PIXI.Texture.fromFrame("lavaFrame_05.png"),
-                PIXI.Texture.fromFrame("lavaFrame_06.png"),
-                PIXI.Texture.fromFrame("lavaFrame_07.png"),
-                PIXI.Texture.fromFrame("lavaFrame_08.png"),
-                PIXI.Texture.fromFrame("lavaFrame_09.png"),
-                PIXI.Texture.fromFrame("lavaFrame_10.png"),
-                PIXI.Texture.fromFrame("lavaFrame_11.png"),
-                PIXI.Texture.fromFrame("lavaFrame_12.png")];
-            PIXI.MovieClip.call(this, this.textures);
-            this.anchor.x = 0.5;
-            this.anchor.y = 1;
-            this.scale.x = this.scale.y = 2;
-            this.animationSpeed = 0.3;
-            this.visible = false;
-        }
-        return Splash;
-    }());
-    ECS.Splash = Splash;
-    Splash.prototype = Object.create(PIXI.MovieClip.prototype);
-    Splash.prototype.splash = function (position) {
-        this.realPosition = position.x;
-        this.position.y = 620; //this.engine.steve.view.position.y;
-        //this.gotoAndPlay(0)
-        this.visible = true;
-    };
-    Splash.prototype.updateTransform = function () {
-        if (!this.visible)
-            return;
-        PIXI.MovieClip.prototype.updateTransform.call(this);
-        this.position.x = this.realPosition - ECS.GameConfig.camera.x;
-        if (this.currentFrame > this.textures.length - 1) {
-            //this.stop();
-            this.visible = false;
-        }
-    };
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
- *  GameKernel.ts
- *  game execute logical
+ *  GameView.ts
+ *  game view scene
  *
  * ========================================================================= */
+/// <reference path="./System.ts" />
+/// <reference path="./HashSet.ts" />
 /// <reference path="./GameConfig.ts" />
+/// <reference path="./GameUI.ts" />
+/// <reference path="./GameItems.ts" />
 var ECS;
 (function (ECS) {
-    var GameKernel = /** @class */ (function () {
-        function GameKernel() {
-            this.view = new GameView(this);
-            this.player = new ECS.GameCharacter();
-            this.segmentManager = new ECS.SegmentManager(this);
-            this.enemyManager = new ECS.EnemyManager(this);
-            this.platManager = new ECS.PlatformManager(this);
-            this.pickupManager = new ECS.PickupManager(this);
-            this.floorManager = new ECS.FloorManager(this);
-            this.collisionManager = new ECS.CollisionManager(this);
-            this.LocalStorage = new Fido.LocalStorage(ECS.GameConfig.bundleId);
-            this.player.view.visible = false;
-            this.bulletMult = 1;
-            this.pickupCount = 0;
-            this.score = 0;
-            this.joyrideMode = false;
-            this.joyrideCountdown = 0;
-            this.isPlaying = false;
-            this.levelCount = 0;
-            this.gameReallyOver = false;
-            this.isDying = false;
-            this.view.game.addChild(this.player.view);
-        }
-        GameKernel.prototype.start = function () {
-            this.segmentManager.reset();
-            this.enemyManager.destroyAll();
-            this.pickupManager.destroyAll();
-            this.platManager.destroyAll();
-            this.isPlaying = true;
-            this.gameReallyOver = false;
-            this.score = 0;
-            this.player.level = 1;
-            this.player.position.y = 477;
-            this.player.speed.y = 0;
-            this.player.speed.x = this.player.baseSpeed;
-            this.player.view.rotation = 0;
-            this.player.isFlying = false;
-            this.player.isDead = false;
-            this.player.view.play();
-            this.player.view.visible = true;
-            this.segmentManager.chillMode = false;
-            this.bulletMult = 1;
-        };
-        GameKernel.prototype.update = function () {
-            //console.log("game update!!");
-            ECS.GameConfig.time.update();
-            var targetCamY = 0;
-            if (targetCamY > 0)
-                targetCamY = 0;
-            if (targetCamY < -70)
-                targetCamY = -70;
-            ECS.GameConfig.camera.y = targetCamY;
-            if (ECS.GameConfig.gameMode !== ECS.GAMEMODE.PAUSED) {
-                this.player.update();
-                this.collisionManager.update();
-                this.platManager.update();
-                this.segmentManager.update();
-                this.floorManager.update();
-                this.enemyManager.update();
-                this.pickupManager.update();
-                if (this.joyrideMode) {
-                    this.joyrideCountdown -= ECS.GameConfig.time.DELTA_TIME;
-                    if (this.joyrideCountdown <= 0) {
-                        this.joyrideComplete();
-                    }
-                }
-                this.levelCount += ECS.GameConfig.time.DELTA_TIME;
-                if (this.levelCount > (60 * 60)) {
-                    this.levelCount = 0;
-                    this.player.level += 0.05;
-                    ECS.GameConfig.time.speed += 0.05;
-                }
-            }
-            else {
-                if (this.joyrideMode) {
-                    this.joyrideCountdown += ECS.GameConfig.time.DELTA_TIME;
-                }
-            }
-            this.view.update();
-        };
-        GameKernel.prototype.reset = function () {
-            this.enemyManager.destroyAll();
-            this.platManager.destroyAll();
-            this.floorManager.destroyAll();
-            this.segmentManager.reset();
-            this.view.zoom = 1;
-            this.pickupCount = 0;
-            this.levelCount = 0;
-            this.player.level = 1;
-            this.view.game.addChild(this.player.view);
-        };
-        GameKernel.prototype.joyrideComplete = function () {
-            this.joyrideMode = false;
-            this.pickupCount = 0;
-            this.bulletMult += 0.3;
-            this.view.normalMode();
-            this.player.normalMode();
-            this.enemyManager.destroyAll();
-        };
-        GameKernel.prototype.gameover = function () {
-            this.isPlaying = false;
-            this.isDying = true;
-            this.segmentManager.chillMode = true;
-            var nHighscore = this.LocalStorage.get('highscore');
-            if (!nHighscore || this.score > nHighscore) {
-                this.LocalStorage.store('highscore', this.score);
-                ECS.GameConfig.newHighscore = true;
-            }
-            //this.onGameover();
-            this.view.game.addChild(this.player.view);
-            TweenLite.to(this.view, 0.5, {
-                zoom: 2,
-                ease: Cubic.easeOut
-            });
-            //this.reset();
-            //this.start();
-        };
-        GameKernel.prototype.gameoverReal = function () {
-            this.gameReallyOver = true;
-            this.isDying = false;
-            //this.onGameoverReal();
-        };
-        GameKernel.prototype.pickup = function (idx) {
-            if (this.player.isDead)
-                return;
-            this.pickupCount++;
-            // if(this.pickupCount >= 50 * this.bulletMult && !this.player.isDead)
-            // {
-            //     this.pickupCount = 0;
-            //     this.joyrideMode = true;
-            //     this.joyrideCountdown = 60 * 10;
-            //     this.view.joyrideMode();
-            //     this.player.joyrideMode();
-            //     this.player.position.x = 0;
-            //     GameConfig.camera.x = GameConfig.game.player.position.x - 100;
-            //     this.enemyManager.destroyAll();
-            //     this.pickupManager.destroyAll();
-            //     this.floorManager.destroyAll();	
-            //     this.segmentManager.reset();
-            // }
-        };
-        return GameKernel;
-    }());
-    ECS.GameKernel = GameKernel;
-    var BackGroundElement = /** @class */ (function () {
-        function BackGroundElement(texture, y, owner, width) {
-            if (width === void 0) { width = 940; }
-            this.sprites = [];
-            this.spriteWidth = texture.width - 5;
-            var amount = Math.ceil(width / this.spriteWidth);
-            if (amount < 3)
-                amount = 3;
-            for (var i = 0; i < amount; i++) {
-                var sprite = new PIXI.Sprite(texture);
-                sprite.position.y = y;
-                owner.addChild(sprite);
-                this.sprites.push(sprite);
-            }
-            ;
-            this.speed = 1;
-        }
-        BackGroundElement.prototype.setPosition = function (position) {
-            var h = this.spriteWidth;
-            for (var i = 0; i < this.sprites.length; i++) {
-                var pos = -position * this.speed;
-                pos += i * h;
-                pos %= h * this.sprites.length;
-                pos += h / 2;
-                //console.log(Math.floor(pos) - GameConfig.xOffset);
-                this.sprites[i].position.x = pos; //Math.floor(pos) - GameConfig.xOffset
-            }
-            ;
-        };
-        return BackGroundElement;
-    }());
-    ECS.BackGroundElement = BackGroundElement;
-    var GameVines = /** @class */ (function () {
-        function GameVines(owner) {
-            this.vines = [];
-            this.owner = owner;
-            for (var i = 0; i < 10; i++) {
-                var vine = new PIXI.Sprite.fromFrame("01_hanging_flower3.png");
-                vine.offset = i * 100 + Math.random() * 50;
-                vine.speed = (1.5 + Math.random() * 0.25) / 2;
-                vine.position.y = Math.random() * -200;
-                owner.addChild(vine);
-                vine.position.x = 200;
-                this.vines.push(vine);
-            }
-            ;
-            this.speed = 1;
-        }
-        GameVines.prototype.setPosition = function (position) {
-            for (var i = 0; i < this.vines.length; i++) {
-                var vine = this.vines[i];
-                var pos = -(position + vine.offset) * vine.speed;
-                pos %= this.owner.width;
-                pos += this.owner.width;
-                vine.position.x = pos;
-            }
-            ;
-        };
-        return GameVines;
-    }());
-    ECS.GameVines = GameVines;
-    var GameBackground = /** @class */ (function () {
-        function GameBackground(front) {
-            console.log("init background!");
-            PIXI.DisplayObjectContainer.call(this);
-            this.width = 1000;
-            this.scrollPosition = 1500;
-            //console.log(PIXI.Texture);
-            var bgTex = PIXI.Texture.fromImage("img/bg_up.png");
-            //bgTex.width = 1281;
-            bgTex.height = 500;
-            this.bgTex = new BackGroundElement(bgTex, -195, this);
-            //this.rearCanopy = new BackGroundElement(PIXI.Texture.fromFrame("03_rear_canopy.png"), 0, this);
-            this.tree1 = PIXI.Sprite.fromFrame("tree1.png");
-            this.tree1.width = 150;
-            this.tree1.height = 150;
-            this.tree1.position.y = 380;
-            this.addChild(this.tree1);
-            this.tree2 = PIXI.Sprite.fromFrame("tree2.png");
-            this.tree2.width = 150;
-            this.tree2.height = 150;
-            this.tree2.position.y = 380;
-            this.addChild(this.tree2);
-            this.cloud1 = PIXI.Sprite.fromFrame("cloud1.png");
-            this.cloud1.position.y = 100;
-            this.addChild(this.cloud1);
-            this.cloud2 = PIXI.Sprite.fromFrame("cloud2.png");
-            this.cloud2.position.y = 50;
-            this.addChild(this.cloud2);
-            //this.farCanopy = new BackGroundElement(PIXI.Texture.fromFrame("02_front_canopy.png"), 0, this);
-            //this.vines = new GameVines(this);
-            //this.roofLeaves = new BackGroundElement(PIXI.Texture.fromFrame("00_roof_leaves.png"), 0, this);
-            //this.frontSilhouette = new BackGroundElement(PIXI.Texture.fromFrame("01_front_silhouette.png"), 424, this);
-            this.bgTex.speed = 1 / 2;
-            //this.rearSilhouette.speed = 1.2/2;
-            //this.rearCanopy.speed = 1.2/2;
-            //this.farCanopy.speed = 1.5/2;
-            //this.frontSilhouette.speed = 1.6/2;
-            //this.roofLeaves.speed = 2/2;
-        }
-        return GameBackground;
-    }());
-    ECS.GameBackground = GameBackground;
-    GameBackground.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    GameBackground.prototype.updateTransform = function () {
-        this.scrollPosition = ECS.GameConfig.camera.x + 8000;
-        var treePos = -this.scrollPosition * 1.5 / 2;
-        treePos %= this.width + 556;
-        treePos += this.width + 556;
-        treePos -= this.tree1.width / 2;
-        this.tree1.position.x = treePos - ECS.GameConfig.xOffset;
-        var treePos2 = -(this.scrollPosition + this.width / 2) * 1.5 / 2;
-        treePos2 %= this.width + 556;
-        treePos2 += this.width + 556;
-        treePos2 -= this.tree2.width / 2;
-        this.tree2.position.x = treePos2 - ECS.GameConfig.xOffset;
-        var cloud1Pos = -this.scrollPosition * 1.5 / 2;
-        cloud1Pos %= this.width + 556;
-        cloud1Pos += this.width + 556;
-        cloud1Pos -= this.cloud1.width / 2;
-        this.cloud1.position.x = cloud1Pos - ECS.GameConfig.xOffset;
-        var cloud2Pos = -(this.scrollPosition + this.width / 2) * 1.5 / 2;
-        cloud2Pos %= this.width + 556;
-        cloud2Pos += this.width + 556;
-        cloud2Pos -= this.cloud2.width / 2;
-        this.cloud2.position.x = cloud2Pos - ECS.GameConfig.xOffset;
-        this.bgTex.setPosition(this.scrollPosition);
-        //this.rearSilhouette.setPosition(this.scrollPosition);
-        //this.rearCanopy.setPosition(this.scrollPosition);
-        // this.farCanopy.setPosition(this.scrollPosition);
-        //this.frontSilhouette.setPosition(this.scrollPosition);
-        //this.roofLeaves.setPosition(this.scrollPosition);
-        //this.vines.setPosition(this.scrollPosition);
-        PIXI.DisplayObjectContainer.prototype.updateTransform.call(this);
-    };
-    var JoyBackGround = /** @class */ (function () {
-        function JoyBackGround() {
-            PIXI.DisplayObjectContainer.call(this);
-            this.width = 1000;
-            this.scrollPosition = 1500;
-            var SCALE = 1; // 0.5
-            this.swoosh = new BackGroundElement(PIXI.Texture.fromImage("img/stretched_hyper_tile.jpg"), 0, this);
-            this.swoosh.speed = 0.7;
-            this.scale.y = 1.7;
-            this.scale.x = 4;
-        }
-        return JoyBackGround;
-    }());
-    ECS.JoyBackGround = JoyBackGround;
-    //Game View
-    var GameView = /** @class */ (function () {
-        function GameView(kernel) {
-            console.log("init game view!");
-            this.kernel = kernel;
-            this.renderer = PIXI.autoDetectRenderer(600, 800);
-            ECS.GameConfig.high_mode = (this.renderer instanceof PIXI.WebGLRenderer);
-            this.stage = new PIXI.Stage();
-            this.container = new PIXI.DisplayObjectContainer();
-            this.container.hitArea = this.stage.hitArea;
-            this.container.interactive = true;
+    var GameViewSystem = /** @class */ (function (_super) {
+        __extends(GameViewSystem, _super);
+        function GameViewSystem() {
+            var _this = _super.call(this, "game view") || this;
+            _this.renderer = ECS.GameConfig.app.renderer;
+            _this.GameStage = new PIXI.Container();
+            _this.GameContainer = new PIXI.Container();
             //init scene layer
-            this.hud = new PIXI.DisplayObjectContainer();
-            this.game = new PIXI.DisplayObjectContainer();
-            this.gameFront = new PIXI.DisplayObjectContainer();
-            this.container.addChild(this.game);
-            this.container.addChild(this.gameFront);
-            this.stage.addChild(this.container);
-            this.stage.addChild(this.hud);
-            this.normalBackground = new GameBackground(this.gameFront);
-            //this.powerBar = new PowerBar();
-            this.specialFood = new ECS.Specialfood();
-            this.playUIPanel = new ECS.PlayUIPanel();
-            this.score = new ECS.Score();
-            this.bestScore = new ECS.BestScore();
-            this.background = this.normalBackground;
-            //this.score.position.x = GameConfig.width/2;
-            this.game.addChild(this.background);
-            this.hud.addChild(this.playUIPanel);
-            this.hud.addChild(this.score);
-            this.hud.addChild(this.bestScore);
-            this.hud.addChild(this.specialFood);
-            this.trail = new ECS.GameCharacterTrail(this.game);
-            this.trail2 = new ECS.GameCharacterTrailFire(this.game);
-            //this.powerBar.alpha = 0;
-            this.score.alpha = 0;
-            this.bestScore.alpha = 0;
-            this.count = 0;
-            this.zoom = 1;
-            this.white = PIXI.Sprite.fromImage("img/whiteSquare.jpg");
-            ECS.GameConfig.xOffset = this.container.position.x;
-            //this.dust = new PixiDust();
-            //this.container.addChild(this.dust);
-            this.splash = new ECS.Splash();
-            this.splash.position.y = 300;
-            this.splash.position.x = 300;
-            this.game.addChild(this.splash);
+            _this.hudContainer = new PIXI.Container();
+            _this.game = new PIXI.Container();
+            _this.gameFront = new PIXI.Container();
+            _this.GameContainer.addChild(_this.game);
+            _this.GameContainer.addChild(_this.gameFront);
+            _this.GameStage.addChild(_this.GameContainer);
+            _this.GameStage.addChild(_this.hudContainer);
+            //background container
+            _this.background = (ECS.GameConfig.allSystem.get("background")).BackGroundContainer;
+            _this.game.addChild(_this.background);
+            _this.count = 0;
+            _this.zoom = 1;
+            ECS.GameConfig.xOffset = _this.GameContainer.position.x;
+            ECS.GameConfig.app.stage.addChild(_this.GameStage);
+            return _this;
         }
-        GameView.prototype.showHud = function () {
-            var start = {
-                x: ECS.GameConfig.width + 100,
-                y: 0
-            };
-            this.score.alpha = 1;
-            // this.score.position.x = start.x;
-            // TweenLite.to(this.score.position, 1, {
-            //     x: GameConfig.width - 295 - 20,
-            //     ease: Elastic.easeOut
-            // });
-            this.bestScore.alpha = 1;
-            //this.bestScore.position.x = 500;
-            // this.bestScore.position.y -= 100;
-            // TweenLite.to(this.bestScore.position, 1, {
-            //     x: GameConfig.width - 20,
-            //     ease: Elastic.easeOut
-            // });
-            // this.powerBar.alpha = 1;
-            // this.powerBar.position.x = GameConfig.width;
-            // TweenLite.to(this.powerBar.position, 1, {
-            //     x: GameConfig.width - 295,
-            //     ease: Elastic.easeOut,
-            //     delay: 0.3
-            // });
+        GameViewSystem.prototype.showHud = function () {
+            //up left ui panel
+            this.specialFood = new ECS.Specialfood();
+            //up right ui panel
+            this.UIPanelUpRight = new ECS.GameUIPanelUpRight();
+            this.scoreUI = new ECS.Score(this.UIPanelUpRight.startXList, this.UIPanelUpRight.startYList);
+            this.bestScoreUI = new ECS.BestScore(this.UIPanelUpRight.startXList, this.UIPanelUpRight.startYList);
+            this.distanceScoreUI = new ECS.DistanceScore(this.UIPanelUpRight.startXList, this.UIPanelUpRight.startYList);
+            this.hudContainer.addChild(this.UIPanelUpRight.uiContainer);
+            this.hudContainer.addChild(this.scoreUI.container);
+            this.hudContainer.addChild(this.bestScoreUI.container);
+            this.hudContainer.addChild(this.distanceScoreUI.container);
+            this.hudContainer.addChild(this.specialFood);
         };
-        GameView.prototype.hideHud = function () {
-        };
-        GameView.prototype.update = function () {
+        GameViewSystem.prototype.update = function () {
+            var kernel = ECS.GameConfig.game;
             this.count += 0.01;
             var ratio = (this.zoom - 1);
             var position = -ECS.GameConfig.width / 2;
-            var position2 = -this.kernel.player.view.position.x;
+            var position2 = -kernel.player.view.position.x;
             var inter = position + (position2 - position) * ratio;
-            this.container.position.x = inter * this.zoom;
-            this.container.position.y = -this.kernel.player.view.position.y * this.zoom;
-            this.container.position.x += ECS.GameConfig.width / 2;
-            this.container.position.y += ECS.GameConfig.height / 2;
-            ECS.GameConfig.xOffset = this.container.position.x;
-            if (this.container.position.y > 0)
-                this.container.position.y = 0;
+            this.GameContainer.position.x = inter * this.zoom;
+            this.GameContainer.position.y = -kernel.player.view.position.y * this.zoom;
+            this.GameContainer.position.x += ECS.GameConfig.width / 2;
+            this.GameContainer.position.y += ECS.GameConfig.height / 2;
+            ECS.GameConfig.xOffset = this.GameContainer.position.x;
+            if (this.GameContainer.position.y > 0)
+                this.GameContainer.position.y = 0;
             var yMax = -ECS.GameConfig.height * this.zoom;
             yMax += ECS.GameConfig.height;
-            if (this.container.position.y < yMax)
-                this.container.position.y = yMax;
-            this.container.scale.x = this.zoom;
-            this.container.scale.y = this.zoom;
-            this.trail.target = this.kernel.player;
-            this.trail2.target = this.kernel.player;
-            this.trail.update();
-            this.trail2.update();
+            if (this.GameContainer.position.y < yMax)
+                this.GameContainer.position.y = yMax;
+            this.GameContainer.scale.x = this.zoom;
+            this.GameContainer.scale.y = this.zoom;
+            // this.trail.target = kernel.player;
+            // this.trail2.target = kernel.player;
+            // this.trail.update();
+            // this.trail2.update();
             //this.dust.update();
             //this.lava.setPosition(GameConfig.camera.x + 4000);
-            this.bestScore.update();
-            this.score.setScore(Math.round(this.kernel.score));
-            //this.powerBar.bar.scale.x = ((this.kernel.pickupCount / (50 * this.kernel.bulletMult)) * (248 / 252))
-            this.renderer.render(this.stage);
+            //this.bestScore.update();
+            //update score ui panel
+            if (this.scoreUI.currentScore != kernel.score)
+                this.scoreUI.setScore(kernel.score);
+            if (this.distanceScoreUI.currentScore != kernel.distanceScore)
+                this.distanceScoreUI.setScore(kernel.distanceScore);
+            var hightScore = this.bestScoreUI.LocalData.get('highscore') || 0;
+            if (this.bestScoreUI.highScore != hightScore)
+                this.bestScoreUI.update();
+            this.renderer.render(ECS.GameConfig.app.stage);
         };
-        GameView.prototype.joyrideMode = function () {
+        // doSplash() {
+        //     this.splash.splash(this.kernel.player.position);
+        // }
+        GameViewSystem.prototype.normalMode = function () {
             this.game.removeChild(this.background);
-            //this.background = this.joyBackground;
             this.game.addChildAt(this.background, 0);
-            this.stage.addChild(this.white);
-            this.white.alpha = 1;
-            TweenLite.to(this.white, 0.7, {
-                alpha: 0,
-                ease: Sine.easeOut
-            });
-        };
-        GameView.prototype.doSplash = function () {
-            this.splash.splash(this.kernel.player.position);
-        };
-        GameView.prototype.normalMode = function () {
-            this.game.removeChild(this.background);
-            this.background = this.normalBackground;
-            this.game.addChildAt(this.background, 0);
-            this.stage.addChild(this.white);
+            //this.stage.addChild(this.white)
             this.white.alpha = 1;
             TweenLite.to(this.white, 0.5, {
                 alpha: 0,
                 ease: Sine.easeOut
             });
         };
-        GameView.prototype.resize = function (w, h) {
-            //    console.log("Width ->" + w);
-            //    console.log("Height -> " + h);
-            ECS.GameConfig.width = w;
-            ECS.GameConfig.height = h;
-            this.renderer.resize(w, h);
-            this.background.width = w;
-            this.bestScore.position.x = 900;
-            this.bestScore.position.y = 22;
-            this.bestScore.scale.x = 0.3;
-            this.bestScore.scale.y = 0.3;
-            this.score.position.x = 740;
-            this.score.position.y = 22;
-            this.score.scale.x = 0.3;
-            this.score.scale.y = 0.3;
-            this.specialFood.position.x = 0;
-            this.specialFood.position.y = 12;
-            this.playUIPanel.position.x = 0;
-            this.playUIPanel.position.y = 12;
-            this.white.scale.x = w / 16;
-            this.white.scale.y = h / 16;
-            // this.powerBar.position.x = w - 295;
-            // this.powerBar.position.y = 12;
-        };
-        return GameView;
-    }());
-    ECS.GameView = GameView;
+        return GameViewSystem;
+    }(ECS.System));
+    ECS.GameViewSystem = GameViewSystem;
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
@@ -1807,6 +1144,7 @@ var ECS;
  *
  * ========================================================================= */
 /// <reference path="./GameItems.ts" />
+/// <reference path="./GameBackGround.ts" />
 var ECS;
 (function (ECS) {
     var GameObjectPool = /** @class */ (function () {
@@ -1848,25 +1186,21 @@ var ECS;
         };
         SegmentManager.prototype.update = function () {
             this.position = ECS.GameConfig.camera.x + ECS.GameConfig.width * 2;
-            // look at where we are..
             var relativePosition = this.position - this.currentSegment.start;
+            // console.log("relativePosition:"+relativePosition);
+            // console.log("length:"+this.currentSegment.length);
             if (relativePosition > this.currentSegment.length) {
-                if (this.engine.joyrideMode) {
-                    var nextSegment = this.startSegment;
-                    nextSegment.start = this.currentSegment.start + this.currentSegment.length;
-                    this.currentSegment = nextSegment;
-                    for (var i = 0; i < this.currentSegment.floor.length; i++) {
-                        this.engine.floorManager.addFloor(this.currentSegment.start + this.currentSegment.floor[i]);
-                    }
-                    return;
-                }
                 //var nextSegment = this.startSegment;//this.sections[this.count % this.sections.length];
                 var nextSegment = this.sections[this.count % this.sections.length];
                 // section finished!
                 nextSegment.start = this.currentSegment.start + this.currentSegment.length;
                 this.currentSegment = nextSegment;
                 // add the elements!
-                for (var i = 0; i < this.currentSegment.floor.length; i++) {
+                //console.log(this.currentSegment.floor.length);
+                var floors = this.currentSegment.floor;
+                var length = floors.length / 1.0;
+                for (var i = 0; i < length; i++) {
+                    //console.log(this.currentSegment.start + this.currentSegment.floor[i]);
                     this.engine.floorManager.addFloor(this.currentSegment.start + this.currentSegment.floor[i]);
                 }
                 var blocks = this.currentSegment.blocks;
@@ -2001,6 +1335,7 @@ var ECS;
             var enemy = this.enemyPool.getObject();
             enemy.position.x = x;
             enemy.position.y = y;
+            enemy.view.textures = enemy.moveingFrames;
             enemy.view.play();
             this.enemies.push(enemy);
             this.engine.view.gameFront.addChild(enemy.view);
@@ -2156,12 +1491,13 @@ var ECS;
     ECS.PickupManager = PickupManager;
     var Floor = /** @class */ (function () {
         function Floor() {
-            PIXI.Sprite.call(this, PIXI.Texture.fromImage("img/bg_down.png"));
+            this.position = new PIXI.Point();
+            var view = new PIXI.Sprite(PIXI.Texture.fromFrame("img/bg_down.png"));
+            this.view = view;
         }
         return Floor;
     }());
     ECS.Floor = Floor;
-    Floor.prototype = Object.create(PIXI.Sprite.prototype);
     var FloorManager = /** @class */ (function () {
         function FloorManager(engine) {
             console.log("init floor manager!");
@@ -2173,9 +1509,9 @@ var ECS;
         FloorManager.prototype.update = function () {
             for (var i = 0; i < this.floors.length; i++) {
                 var floor = this.floors[i];
-                floor.position.x = floor.x - ECS.GameConfig.camera.x - 16;
+                floor.view.position.x = floor.position.x - ECS.GameConfig.camera.x - 16;
                 if (floor.position.x < -1135 - ECS.GameConfig.xOffset - 16) {
-                    //this.floorPool.returnObject(floor)
+                    //console.log("delete floor");
                     this.floors.splice(i, 1);
                     i--;
                     this.engine.view.gameFront.removeChild(floor);
@@ -2184,15 +1520,16 @@ var ECS;
         };
         FloorManager.prototype.addFloor = function (floorData) {
             var floor = this.floorPool.getObject();
-            floor.x = floorData;
-            floor.position.y = 520;
-            this.engine.view.gameFront.addChild(floor);
+            floor.position.x = floorData;
+            //floor.position.y = 520;
+            floor.position.y = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteHeight;
+            floor.view.position.y = floor.position.y;
+            this.engine.view.gameFront.addChild(floor.view);
             this.floors.push(floor);
         };
         FloorManager.prototype.destroyAll = function () {
             for (var i = 0; i < this.floors.length; i++) {
                 var floor = this.floors[i];
-                //this.floorPool.returnObject(floor);
                 this.engine.view.gameFront.removeChild(floor);
             }
             this.floors = [];
@@ -2234,8 +1571,8 @@ var ECS;
                 if (xdist > -enemy.width / 2 + floatRange && xdist < enemy.width / 2 - floatRange) {
                     var ydist = enemy.position.y - player.position.y;
                     if (ydist > -enemy.height / 2 - 20 + floatRange && ydist < enemy.height / 2 - floatRange) {
+                        //attack cat and get point
                         ECS.GameConfig.game.score += 10;
-                        ECS.GameConfig.game.view.score.jump();
                         switch (ECS.GameConfig.specialMode) {
                             case ECS.SPECIALMODE.NONE:
                                 player.die();
@@ -2290,6 +1627,7 @@ var ECS;
                         if (ydist > -pickup.height / 2 - 20 && ydist < pickup.height / 2) {
                             //console.log("cat eat food!");
                             enemy.view.textures = enemy.stealFrames;
+                            enemy.view.play();
                             enemy.isEatNow = true;
                             this.engine.pickupManager.removePickup(j, false, enemy);
                             //this.engine.pickup(i);
@@ -2326,12 +1664,9 @@ var ECS;
                     var ydist = plat.position.y - player.position.y;
                     if (ydist > -plat.height / 2 - 20 && ydist < plat.height / 2) {
                         if (player.position.y < plat.position.y - 10) {
+                            //player jump to the plat
                             player.position.y = plat.position.y - plat.height / 2 - player.height / 2;
-                            //console.log("plat!");
                             player.ground = player.position.y;
-                            // player.startJump = false;
-                            // player.isJumped = false;
-                            // player.cnt =0;
                             ECS.GameConfig.isOnPlat = true;
                             player.onGround = true;
                         }
@@ -2355,8 +1690,9 @@ var ECS;
                 if (flag) {
                     ECS.GameConfig.isOnPlat = false;
                     ;
-                    player.ground = 477;
+                    player.ground = this.engine.player.floorHeight;
                     ECS.GameConfig.playerMode = ECS.PLAYMODE.FALL;
+                    //console.log("leave plat");
                 }
             }
         };
@@ -2365,10 +1701,10 @@ var ECS;
             var player = this.engine.player;
             var max = floors.length;
             player.onGround = false;
-            if (player.position.y > 610) {
+            if (player.position.y > ECS.GameConfig.height) {
                 if (this.engine.isPlaying) {
                     player.boil();
-                    this.engine.view.doSplash();
+                    //this.engine.view.doSplash();
                     this.engine.gameover();
                 }
                 else {
@@ -2381,22 +1717,22 @@ var ECS;
                     if (player.bounce === 0) {
                         player.bounce++;
                         player.boil();
-                        this.engine.view.doSplash();
+                        //this.engine.view.doSplash();
                     }
                     return;
                 }
             }
             for (var i = 0; i < max; i++) {
                 var floor = floors[i];
-                var xdist = floor.x - player.position.x + 1135;
-                if (player.position.y > 477) {
+                var xdist = floor.position.x - player.position.x + 1135;
+                //console.log(player.position.y + "/" + this.engine.player.floorHeight);
+                if (player.position.y >= this.engine.player.floorHeight) {
                     if (xdist > 0 && xdist < 1135) {
                         if (player.isDead) {
                             player.bounce++;
                             if (player.bounce > 2) {
                                 return;
                             }
-                            //FidoAudio.play('thudBounce');
                             player.speed.y *= -0.7;
                             player.speed.x *= 0.8;
                             if (player.rotationSpeed > 0) {
@@ -2413,21 +1749,1027 @@ var ECS;
                             player.speed.y = -0.3;
                         }
                         if (!player.isFlying) {
-                            player.position.y = 478;
+                            player.position.y = this.engine.player.floorHeight;
                             player.onGround = true;
                         }
                     }
                 }
-            }
-            if (player.position.y < 0) {
-                //player.position.y = 0;
-                //player.speed.y *= 0;
             }
         };
         return CollisionManager;
     }());
     ECS.CollisionManager = CollisionManager;
 })(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameCharacter.ts
+ *  character controller
+ *
+ * ========================================================================= */
+/// <reference path="./GameConfig.ts" />
+var ECS;
+(function (ECS) {
+    var GameCharacter = /** @class */ (function () {
+        function GameCharacter() {
+            this.isSlide = false;
+            this.ninjiaEffectNumber = 0;
+            this.isPlayingNinjiaEffect = false;
+            this.isPlayingInoEffect = false;
+            console.log("init character!");
+            this.position = new PIXI.Point();
+            this.speedUpList = [];
+            this.runningFrames = [
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-01.png"),
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-02.png"),
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-03.png"),
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-04.png"),
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-05.png"),
+                PIXI.Texture.fromFrame("CHARACTER/RUN/Character-06.png"),
+            ];
+            this.indoTightFrame = [
+                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0001.png"),
+                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0002.png"),
+                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0003.png"),
+                PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/INDONTIGHT/boom0004.png")
+            ];
+            this.jumpFrames = [
+                PIXI.Texture.fromFrame("CHARACTER/JUMP/Jump.png"),
+            ];
+            this.slideFrame = [
+                PIXI.Texture.fromFrame("CHARACTER/SLIDE/Slide.png"),
+            ];
+            this.dashFrames = [
+                PIXI.Texture.fromFrame("CHARACTER/POWER/DASH/dash0002.png")
+            ];
+            this.shootFrame = [
+                PIXI.Texture.fromFrame("CHARACTER/POWER/SHOOT/shoot0001.png"),
+                PIXI.Texture.fromFrame("CHARACTER/POWER/SHOOT/shoot0002.png")
+            ];
+            this.view = new PIXI.extras.AnimatedSprite(this.runningFrames);
+            this.view.animationSpeed = 0.23;
+            this.view.anchor.x = 0.5;
+            this.view.anchor.y = 0.5;
+            this.view.height = 135;
+            this.view.width = 75;
+            this.floorSpriteHeight = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteHeight;
+            //refresh floor position
+            this.refreshFloorHeight();
+            this.gravity = 9.8;
+            this.baseSpeed = 8;
+            this.speed = new PIXI.Point(this.baseSpeed, 0);
+            this.activeCount = 0;
+            this.isJumped = false;
+            this.accel = 0;
+            this.width = 26;
+            this.height = 37;
+            this.onGround = true;
+            this.rotationSpeed = 0;
+            this.joyRiding = false;
+            this.level = 1;
+            this.realAnimationSpeed = 0.23;
+            this.volume = 0.3;
+            //start speed
+            this.vStart = 30;
+            this.mass = 65;
+            this.angle = Math.PI * 45 / 360;
+            this.startJump = false;
+            this.b_jumpTwo = false;
+            this.smooth = 0.05;
+            this.cnt = 0;
+            this.shinobiEffect1 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
+            this.shinobiEffect1.anchor.x = -1.5;
+            this.shinobiEffect1.anchor.y = 5.5;
+            this.shinobiEffect1.scale.x = 0.2;
+            this.shinobiEffect1.scale.y = 0.2;
+            this.shinobiEffect2 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
+            this.shinobiEffect2.anchor.x = 0;
+            this.shinobiEffect2.anchor.y = 5.5;
+            this.shinobiEffect2.scale.x = 0.2;
+            this.shinobiEffect2.scale.y = 0.2;
+            this.shinobiEffect3 = new PIXI.Sprite(PIXI.Texture.fromImage("img/dash_stock.png"));
+            this.shinobiEffect3.anchor.x = 1.5;
+            this.shinobiEffect3.anchor.y = 5.5;
+            this.shinobiEffect3.scale.x = 0.2;
+            this.shinobiEffect3.scale.y = 0.2;
+            this.backEffect = new PIXI.Sprite(PIXI.Texture.fromImage("img/blade.png"));
+            this.backEffect.anchor.x = 0.8;
+            this.backEffect.anchor.y = 0.5;
+            this.backEffect.scale.x = 1;
+            this.backEffect.scale.y = 1;
+            this.specialEffectView = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/DASH/dash-shinobi-new.png"));
+            this.specialEffectView.anchor.x = 0.2;
+            this.specialEffectView.anchor.y = 0.5;
+            this.specialEffectView.scale.x = 2;
+            this.specialEffectView.scale.y = 2;
+            this.indoEffect = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/SHOOT/maung shoot-new.png"));
+            this.indoEffect.anchor.x = 0.2;
+            this.indoEffect.anchor.y = 0.6;
+            this.indoEffect.scale.x = 2;
+            this.indoEffect.scale.y = 2;
+            this.marioEffect = new PIXI.Sprite(PIXI.Texture.fromFrame("CHARACTER/POWER EFFECTS/MARIO/maung ninja.png"));
+            this.marioEffect.anchor.x = 0.1;
+            this.marioEffect.anchor.y = 0.52;
+            this.marioEffect.scale.x = 2;
+            this.marioEffect.scale.y = 2;
+            this.indonTight = new PIXI.extras.AnimatedSprite(this.indoTightFrame);
+            this.indonTight.animationSpeed = 0.1;
+            this.indonTight.anchor.x = 0.5;
+            this.indonTight.anchor.y = 0.5;
+            this.indonTight.height = ECS.GameConfig.height / 2;
+            this.indonTight.width = ECS.GameConfig.width / 2;
+            this.view.play();
+            //GameConfig.app.start();
+        }
+        GameCharacter.prototype.update = function () {
+            if (this.isDead) {
+                this.updateDieing();
+            }
+            else {
+                this.updateRunning();
+            }
+        };
+        GameCharacter.prototype.normalMode = function () {
+            this.joyRiding = false;
+            TweenLite.to(this.speed, 0.6, {
+                x: this.baseSpeed,
+                ease: Cubic.easeOut
+            });
+            this.realAnimationSpeed = 0.23;
+        };
+        GameCharacter.prototype.chkOnGround = function () {
+            if (this.position.y - this.ground >= 0) {
+                return true;
+            }
+            return false;
+        };
+        GameCharacter.prototype.resetSpecialFoods = function () {
+            for (var i = 0; i < 4; i++) {
+                ECS.GameConfig.game.view.specialFood.digits[i].texture = ECS.GameConfig.game.view.specialFood.foods[i];
+            }
+        };
+        GameCharacter.prototype.ninjiaOperate = function () {
+            if (this.ninjiaEffectNumber < 3 && !this.isPlayingNinjiaEffect) {
+                //console.log("dash");
+                this.isPlayingNinjiaEffect = true;
+                ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
+                this.view.addChild(this.specialEffectView);
+                switch (this.ninjiaEffectNumber) {
+                    case 0:
+                        this.view.removeChild(this.shinobiEffect1);
+                        break;
+                    case 1:
+                        this.view.removeChild(this.shinobiEffect2);
+                        break;
+                    case 2:
+                        this.view.removeChild(this.shinobiEffect3);
+                        break;
+                }
+                this.speed.x *= 10;
+                this.ninjiaEffectNumber++;
+            }
+        };
+        GameCharacter.prototype.indoOperate = function () {
+            if (!this.isPlayingInoEffect) {
+                //chara animation
+                this.view.textures = this.shootFrame;
+                this.view.play();
+                ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
+                this.view.addChild(this.indoEffect);
+                //effect play
+                (ECS.GameConfig.allSystem.get("view")).game.addChild(this.indonTight);
+                this.indonTight.textures = this.indoTightFrame;
+                this.indonTight.play();
+                this.isPlayingInoEffect = true;
+            }
+        };
+        GameCharacter.prototype.ninjaMode = function () {
+            if (this.isPlayingNinjiaEffect) {
+                ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
+                var DuringTime = ECS.GameConfig.timeClock();
+                //console.log(DuringTime);
+                if (DuringTime > 200) {
+                    this.view.textures = this.runningFrames;
+                    this.view.play();
+                    this.speed.x /= 10;
+                    this.view.removeChild(this.specialEffectView);
+                    this.isPlayingNinjiaEffect = false;
+                    if (this.ninjiaEffectNumber == 3) {
+                        this.ninjiaEffectNumber = 0;
+                        ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
+                        ECS.GameConfig.game.pickupManager.pickedUpPool = [];
+                        ECS.GameConfig.game.pickupManager.canPickOrNot = true;
+                        this.resetSpecialFoods();
+                        this.view.removeChild(this.backEffect);
+                        //console.log("ninja finished!");
+                    }
+                }
+            }
+        };
+        GameCharacter.prototype.marioMode = function () {
+            ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
+            var DuringTime = ECS.GameConfig.timeClock();
+            //console.log(DuringTime);
+            if (DuringTime > 10000) {
+                //console.log("mario finished!");
+                ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
+                ECS.GameConfig.game.pickupManager.pickedUpPool = [];
+                ECS.GameConfig.game.pickupManager.canPickOrNot = true;
+                this.speed.x /= 2;
+                this.view.removeChild(this.marioEffect);
+                this.resetSpecialFoods();
+            }
+        };
+        GameCharacter.prototype.indoMode = function () {
+            if (this.isPlayingInoEffect) {
+                this.indonTight.position.x = this.position.x - ECS.GameConfig.camera.x;
+                this.indonTight.position.y = this.position.y - ECS.GameConfig.camera.y;
+                ECS.GameConfig.tmpTimeClockEnd = ECS.GameConfig.time.currentTime;
+                var DuringTime = ECS.GameConfig.timeClock();
+                if (DuringTime > 1000) {
+                    //console.log("indo finished!");
+                    this.isPlayingInoEffect = false;
+                    ECS.GameConfig.specialMode = ECS.SPECIALMODE.NONE;
+                    ECS.GameConfig.game.pickupManager.pickedUpPool = [];
+                    ECS.GameConfig.game.pickupManager.canPickOrNot = true;
+                    (ECS.GameConfig.allSystem.get("view")).game.removeChild(this.indonTight);
+                    this.view.removeChild(this.indoEffect);
+                    this.resetSpecialFoods();
+                }
+            }
+        };
+        GameCharacter.prototype.refreshFloorHeight = function () {
+            this.floorHeight = this.floorSpriteHeight - this.view.height * 0.5;
+            this.view.position.y = this.floorHeight;
+            this.position.y = this.floorHeight;
+            this.ground = this.floorHeight;
+        };
+        GameCharacter.prototype.updateRunning = function () {
+            this.view.animationSpeed = this.realAnimationSpeed * ECS.GameConfig.time.DELTA_TIME * this.level;
+            this.indonTight.animationSpeed = this.realAnimationSpeed * ECS.GameConfig.time.DELTA_TIME * this.level;
+            //speed up when user reach some points
+            var judgeImPoints = Math.floor(ECS.GameConfig.game.distanceScore / 2);
+            if (judgeImPoints != 0 && !this.speedUpList.includes(judgeImPoints)) {
+                //console.log("speed up!");
+                this.speedUpList.push(judgeImPoints);
+                this.speed.x *= 1.1;
+            }
+            switch (ECS.GameConfig.playerMode) {
+                case ECS.PLAYMODE.JUMPING1:
+                    this.speed.y = -this.vStart * Math.sin(this.angle);
+                    break;
+                case ECS.PLAYMODE.JUMPING2:
+                    this.speed.y = -this.vStart * Math.sin(this.angle);
+                    break;
+                case ECS.PLAYMODE.FALL:
+                    //should have gravity
+                    this.speed.y += this.gravity * ECS.GameConfig.time.DELTA_TIME * this.smooth;
+                    break;
+                case ECS.PLAYMODE.RUNNING:
+                    this.speed.y = 0;
+                    break;
+                case ECS.PLAYMODE.SLIDE:
+                    this.speed.y = 0;
+                    break;
+            }
+            if (!this.chkOnGround() && (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1 || ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING2))
+                ECS.GameConfig.playerMode = ECS.PLAYMODE.FALL;
+            else if (ECS.GameConfig.playerMode == ECS.PLAYMODE.FALL && this.chkOnGround())
+                ECS.GameConfig.playerMode = ECS.PLAYMODE.RUNNING;
+            this.position.x += this.speed.x * ECS.GameConfig.time.DELTA_TIME * this.level;
+            this.position.y += this.speed.y * ECS.GameConfig.time.DELTA_TIME;
+            if (this.onGround && ECS.GameConfig.playerMode == ECS.PLAYMODE.RUNNING && this.view.textures != this.runningFrames && !this.isPlayingInoEffect) {
+                this.view.anchor.y = 0.5;
+                this.view.textures = this.runningFrames;
+                this.view.play();
+            }
+            else if (ECS.GameConfig.playerMode == ECS.PLAYMODE.SLIDE && this.view.textures != this.slideFrame) {
+                this.view.anchor.y = 0.1;
+                this.view.textures = this.slideFrame;
+                this.view.play();
+            }
+            else if ((ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1 || ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING2) && this.view.textures != this.jumpFrames) {
+                this.view.textures = this.jumpFrames;
+                this.view.play();
+            }
+            switch (ECS.GameConfig.specialMode) {
+                case ECS.SPECIALMODE.NONE:
+                    break;
+                case ECS.SPECIALMODE.NINJAMODE:
+                    this.marioMode();
+                    break;
+                case ECS.SPECIALMODE.JAPANMODE:
+                    if (this.ninjiaEffectNumber <= 3) {
+                        this.ninjaMode();
+                    }
+                    break;
+                case ECS.SPECIALMODE.INDONMODE:
+                    this.indoMode();
+                    break;
+            }
+            ECS.GameConfig.camera.x = this.position.x - 100;
+            ECS.GameConfig.game.distanceScore = Math.floor(this.position.x / 10000);
+            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
+            this.view.position.y = this.position.y - ECS.GameConfig.camera.y;
+            this.view.rotation += (this.speed.y * 0.05 - this.view.rotation) * 0.1;
+        };
+        GameCharacter.prototype.updateDieing = function () {
+            this.speed.x *= 0.999;
+            if (this.onGround)
+                this.speed.y *= 0.99;
+            this.speed.y += 0.1;
+            this.accel += (0 - this.accel) * 0.1 * ECS.GameConfig.time.DELTA_TIME;
+            this.speed.y += this.gravity * ECS.GameConfig.time.DELTA_TIME;
+            ;
+            this.position.x += this.speed.x * ECS.GameConfig.time.DELTA_TIME;
+            ;
+            this.position.y += this.speed.y * ECS.GameConfig.time.DELTA_TIME;
+            ;
+            ECS.GameConfig.camera.x = this.position.x - 100;
+            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
+            this.view.position.y = this.position.y - ECS.GameConfig.camera.y;
+            if (this.speed.x < 5) {
+                this.view.rotation += this.rotationSpeed * (this.speed.x / 5) * ECS.GameConfig.time.DELTA_TIME;
+            }
+            else {
+                this.view.rotation += this.rotationSpeed * ECS.GameConfig.time.DELTA_TIME;
+            }
+        };
+        GameCharacter.prototype.jumpTwo = function () {
+            //console.log("jump two");
+            if (this.isDead) {
+                if (this.speed.x < 5) {
+                    this.isDead = false;
+                    this.speed.x = 10;
+                }
+            }
+            if (Math.abs(this.position.y - this.ground) > 1) {
+                ECS.GameConfig.playerMode = ECS.PLAYMODE.JUMPING2;
+            }
+        };
+        GameCharacter.prototype.slide = function (isSlide) {
+            if (this.isDead) {
+                if (this.speed.x < 5) {
+                    this.isDead = false;
+                    this.speed.x = 10;
+                }
+            }
+            // console.log(isSlide);
+            if (ECS.GameConfig.playerMode != ECS.PLAYMODE.SLIDE && this.position.y == this.ground) {
+                this.isSlide = isSlide;
+                if (isSlide)
+                    ECS.GameConfig.playerMode = ECS.PLAYMODE.SLIDE;
+            }
+            else if (!isSlide) {
+                //console.log("slide finish");
+                this.onGround = true;
+                this.position.y = this.ground;
+                this.isSlide = isSlide;
+                ECS.GameConfig.playerMode = ECS.PLAYMODE.RUNNING;
+            }
+        };
+        GameCharacter.prototype.jump = function () {
+            //console.log("click jump");
+            if (this.isDead) {
+                if (this.speed.x < 5) {
+                    this.isDead = false;
+                    this.speed.x = 10;
+                }
+            }
+            ECS.GameConfig.playerMode = ECS.PLAYMODE.JUMPING1;
+        };
+        GameCharacter.prototype.die = function () {
+            if (this.isDead)
+                return;
+            TweenLite.to(ECS.GameConfig.time, 0.5, {
+                speed: 0.1,
+                ease: Cubic.easeOut,
+                onComplete: function () {
+                    TweenLite.to(ECS.GameConfig.time, 2, {
+                        speed: 1,
+                        delay: 1
+                    });
+                }
+            });
+            this.isDead = true;
+            this.bounce = 0;
+            this.speed.x = 15;
+            this.speed.y = -15;
+            this.rotationSpeed = 0.3;
+            this.view.stop();
+        };
+        GameCharacter.prototype.boil = function () {
+            if (this.isDead)
+                return;
+            this.isDead = true;
+        };
+        GameCharacter.prototype.fall = function () {
+            this.startJump = false;
+            //this.b_jumpTwo = false;
+            this.isJumped = true;
+        };
+        GameCharacter.prototype.isAirbourne = function () { };
+        GameCharacter.prototype.stop = function () {
+            this.view.stop();
+        };
+        GameCharacter.prototype.resume = function () {
+            this.view.play();
+        };
+        return GameCharacter;
+    }());
+    ECS.GameCharacter = GameCharacter;
+    var GameEnemy = /** @class */ (function () {
+        function GameEnemy() {
+            this.isEatNow = false;
+            this.position = new PIXI.Point();
+            this.isHit = false;
+            this.width = 150;
+            this.height = 150;
+            this.speed = -10 + Math.random() * 20;
+            ;
+            this.moveingFrames = [
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0001.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0002.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0003.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/WALK/neko0004.png"),
+            ];
+            this.stealFrames = [
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0001.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0002.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0003.png"),
+                PIXI.Texture.fromFrame("CHARACTER/NEKO/STEAL/steal0004.png")
+            ];
+            this.view = new PIXI.extras.AnimatedSprite(this.moveingFrames);
+            this.view.animationSpeed = 0.23;
+            this.view.anchor.x = 0.5;
+            this.view.anchor.y = 0.5;
+            this.view.height = 150;
+            this.view.width = 150;
+            this.view.play();
+        }
+        GameEnemy.prototype.reset = function () {
+            // if(this.explosion)
+            // {
+            //     this.view.removeChild(this.explosion);
+            //     this.explosion.reset();
+            // }
+            this.isHit = false;
+            this.view.width = 157;
+        };
+        GameEnemy.prototype.hit = function () {
+            if (this.isHit)
+                return;
+            this.isHit = true;
+            //if(!this.explosion) this.explosion = new Explosion();
+            //this.explosion.explode();
+            //this.view.addChild(this.explosion);
+            this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"));
+        };
+        GameEnemy.prototype.update = function () {
+            this.view.animationSpeed = 0.23 * ECS.GameConfig.time.DELTA_TIME;
+            this.view.position.x = this.position.x - ECS.GameConfig.camera.x;
+            if (!this.isEatNow) {
+                this.position.x += this.speed * Math.sin(ECS.GameConfig.time.DELTA_TIME);
+                ECS.GameConfig.tmpTimeClockStart1 = ECS.GameConfig.time.currentTime;
+            }
+            else {
+                ECS.GameConfig.tmpTimeClockEnd1 = ECS.GameConfig.time.currentTime;
+                if (ECS.GameConfig.timeClock1() > 2000) {
+                    this.isEatNow = false;
+                    this.view.textures = this.moveingFrames;
+                    this.view.play();
+                }
+            }
+            this.view.position.y = this.position.y;
+        };
+        return GameEnemy;
+    }());
+    ECS.GameEnemy = GameEnemy;
+    var Partical = /** @class */ (function () {
+        function Partical() {
+            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("starPops0004.png"));
+            this.anchor.x = 0.5;
+            this.anchor.y = 0.5;
+            this.speed = new PIXI.Point();
+        }
+        return Partical;
+    }());
+    ECS.Partical = Partical;
+    Partical.prototype = Object.create(PIXI.Sprite.prototype);
+    var GameCharacterTrail = /** @class */ (function () {
+        function GameCharacterTrail(stage) {
+            this.stage = stage;
+            this.target = new PIXI.Point();
+            this.particals = [];
+            this.particalPool = new ECS.GameObjectPool(Partical);
+            this.max = 100;
+            this.count = 0;
+        }
+        GameCharacterTrail.prototype.update = function () {
+            if (this.target.isFlying && !this.target.isDead) {
+                this.count++;
+                if (this.count % 3) {
+                    var partical = this.particalPool.getObject();
+                    this.stage.addChild(partical);
+                    partical.position.x = this.target.view.position.x + (Math.random() * 10) - 5 - 20;
+                    partical.position.y = this.target.view.position.y + 50;
+                    partical.direction = 0;
+                    partical.dirSpeed = Math.random() > 0.5 ? -0.1 : 0.1;
+                    partical.sign = this.particals.length % 2 ? -1 : 1;
+                    partical.scaly = Math.random() * 2 - 1; // - this.target.speed.x * 0.3;
+                    partical.speed.y = this.target.accel * 3;
+                    partical.alphay = 2;
+                    partical.rotation = Math.random() * Math.PI * 2;
+                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
+                    this.particals.push(partical);
+                }
+            }
+            for (var i = 0; i < this.particals.length; i++) {
+                var partical = this.particals[i];
+                partical.dirSpeed += 0.003 * partical.sign;
+                if (partical.dirSpeed > 2)
+                    partical.dirSpeed = 2;
+                partical.direction += partical.dirSpeed;
+                partical.speed.x = Math.sin(partical.direction); // *= 1.1;
+                partical.speed.y = Math.cos(partical.direction);
+                partical.position.x += partical.speed.x * 5 * partical.scaly;
+                partical.position.y += partical.speed.y * 3;
+                partical.alphay *= 0.85;
+                partical.rotation += partical.speed.x * 0.1;
+                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
+                if (partical.alpha < 0.01) {
+                    this.stage.removeChild(partical);
+                    this.particals.splice(i, 1);
+                    //this.particalPool.returnObject(partical);
+                    i--;
+                }
+            }
+        };
+        return GameCharacterTrail;
+    }());
+    ECS.GameCharacterTrail = GameCharacterTrail;
+    var ParticalFire = /** @class */ (function () {
+        function ParticalFire() {
+            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("fireCloud.png"));
+            this.anchor.x = 0.5;
+            this.anchor.y = 0.5;
+            this.speed = new PIXI.Point();
+        }
+        return ParticalFire;
+    }());
+    ECS.ParticalFire = ParticalFire;
+    ParticalFire.prototype = Object.create(PIXI.Sprite.prototype);
+    var GameCharacterTrailFire = /** @class */ (function () {
+        function GameCharacterTrailFire(stage) {
+            this.stage = stage;
+            this.target = new PIXI.Point();
+            this.particals = [];
+            this.particalPool = new ECS.GameObjectPool(ParticalFire);
+            this.max = 100;
+            this.count = 0;
+            this.mOffset = PIXI.mat3.create(); //PIXI.mat3.identity(PIXI.mat3.create());
+            this.mOffset[2] = -30; //this.position.x;
+            this.mOffset[5] = 30; //this.position.y;
+            this.spare = PIXI.mat3.create(); //PIXI.mat3.identity();
+        }
+        GameCharacterTrailFire.prototype.update = function () {
+            //PIXI.Rope.prototype.updateTransform.call(this);
+            if (this.target.isDead) {
+                this.mOffset;
+                PIXI.mat3.multiply(this.mOffset, this.target.view.localTransform, this.spare);
+                this.count++;
+                if (this.count % 3) {
+                    var partical = this.particalPool.getObject();
+                    this.stage.addChild(partical);
+                    partical.position.x = this.spare[2];
+                    partical.position.y = this.spare[5];
+                    partical.speed.x = 1 + Math.random() * 2;
+                    partical.speed.y = 1 + Math.random() * 2;
+                    partical.speed.x *= -1;
+                    partical.speed.y *= 1;
+                    partical.alphay = 2;
+                    partical.rotation = Math.random() * Math.PI * 2;
+                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
+                    this.particals.push(partical);
+                }
+            } // add partical!
+            for (var i = 0; i < this.particals.length; i++) {
+                var partical = this.particals[i];
+                partical.scale.x = partical.scale.y *= 1.02;
+                partical.alphay *= 0.85;
+                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
+                partical.position.x += partical.speed.x * 2;
+                partical.position.y += partical.speed.y * 2;
+                if (partical.alpha < 0.01) {
+                    this.stage.removeChild(partical);
+                    this.particals.splice(i, 1);
+                    //this.particalPool.returnObject(partical);
+                    i--;
+                }
+            }
+            ;
+        };
+        return GameCharacterTrailFire;
+    }());
+    ECS.GameCharacterTrailFire = GameCharacterTrailFire;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameKernel.ts
+ *  game execute logical
+ *
+ * ========================================================================= */
+/// <reference path="./System.ts" />
+/// <reference path="./GameConfig.ts" />
+/// <reference path="./GameLocalData.ts" />
+/// <reference path="./GameBackGround.ts" />
+/// <reference path="./GameView.ts" />
+/// <reference path="./GameManager.ts" />
+/// <reference path="./GameCharacter.ts" />
+var ECS;
+(function (ECS) {
+    var GameKernelSystem = /** @class */ (function (_super) {
+        __extends(GameKernelSystem, _super);
+        function GameKernelSystem() {
+            var _this = _super.call(this, "game kernel") || this;
+            _this.view = (ECS.GameConfig.allSystem.get("view"));
+            _this.player = new ECS.GameCharacter();
+            _this.segmentManager = new ECS.SegmentManager(_this);
+            _this.enemyManager = new ECS.EnemyManager(_this);
+            _this.platManager = new ECS.PlatformManager(_this);
+            _this.pickupManager = new ECS.PickupManager(_this);
+            _this.floorManager = new ECS.FloorManager(_this);
+            _this.collisionManager = new ECS.CollisionManager(_this);
+            _this.LocalData = new ECS.GameLocalData(ECS.GameConfig.localID);
+            _this.player.view.visible = false;
+            _this.bulletMult = 1;
+            _this.pickupCount = 0;
+            _this.score = 0;
+            _this.distanceScore = 0;
+            _this.isPlaying = false;
+            _this.levelCount = 0;
+            _this.gameReallyOver = false;
+            _this.isDying = false;
+            _this.view.game.addChild(_this.player.view);
+            return _this;
+        }
+        GameKernelSystem.prototype.start = function () {
+            this.segmentManager.reset();
+            this.enemyManager.destroyAll();
+            this.pickupManager.destroyAll();
+            this.platManager.destroyAll();
+            this.isPlaying = true;
+            this.gameReallyOver = false;
+            this.player.level = 1;
+            this.player.speed.y = 0;
+            this.player.speed.x = this.player.baseSpeed;
+            this.player.view.rotation = 0;
+            this.player.isFlying = false;
+            this.player.isDead = false;
+            this.player.view.play();
+            this.player.view.visible = true;
+            this.segmentManager.chillMode = false;
+            this.bulletMult = 1;
+            ECS.GameConfig.audio.play("gameMusic");
+        };
+        GameKernelSystem.prototype.update = function () {
+            //console.log("game update!!");
+            ECS.GameConfig.time.update();
+            var targetCamY = 0;
+            if (targetCamY > 0)
+                targetCamY = 0;
+            if (targetCamY < -70)
+                targetCamY = -70;
+            ECS.GameConfig.camera.y = targetCamY;
+            if (ECS.GameConfig.gameMode !== ECS.GAMEMODE.PAUSED) {
+                this.player.update();
+                this.collisionManager.update();
+                this.platManager.update();
+                this.segmentManager.update();
+                this.floorManager.update();
+                this.enemyManager.update();
+                this.pickupManager.update();
+                this.levelCount += ECS.GameConfig.time.DELTA_TIME;
+                if (this.levelCount > (60 * 60)) {
+                    this.levelCount = 0;
+                    this.player.level += 0.05;
+                    ECS.GameConfig.time.speed += 0.05;
+                }
+            }
+            this.view.update();
+        };
+        // reset(){
+        //     this.enemyManager.destroyAll();
+        //     this.platManager.destroyAll();
+        //     this.floorManager.destroyAll();
+        //     this.segmentManager.reset();
+        //     this.view.zoom = 1;
+        //     this.pickupCount = 0;
+        //     this.levelCount = 0;
+        //     this.player.level = 1;
+        //     this.view.game.addChild(this.player.view);
+        // }
+        GameKernelSystem.prototype.gameover = function () {
+            this.isPlaying = false;
+            this.isDying = true;
+            this.segmentManager.chillMode = true;
+            var nHighscore = this.LocalData.get('highscore');
+            if (!nHighscore || this.score > nHighscore) {
+                this.LocalData.store('highscore', this.score);
+                ECS.GameConfig.newHighscore = true;
+            }
+            //this.onGameover();
+            this.view.game.addChild(this.player.view);
+            TweenLite.to(this.view, 0.5, {
+                zoom: 2,
+                ease: Cubic.easeOut
+            });
+            //this.reset();
+            //this.start();
+        };
+        // gameoverReal()
+        // {
+        //     this.gameReallyOver = true;
+        //     this.isDying = false;
+        //     //this.onGameoverReal();
+        // }
+        GameKernelSystem.prototype.pickup = function (idx) {
+            if (this.player.isDead)
+                return;
+            this.pickupCount++;
+        };
+        return GameKernelSystem;
+    }(ECS.System));
+    ECS.GameKernelSystem = GameKernelSystem;
+    var GameVines = /** @class */ (function () {
+        function GameVines(owner) {
+            this.vines = [];
+            this.owner = owner;
+            for (var i = 0; i < 10; i++) {
+                var vine = new PIXI.Sprite.fromFrame("01_hanging_flower3.png");
+                vine.offset = i * 100 + Math.random() * 50;
+                vine.speed = (1.5 + Math.random() * 0.25) / 2;
+                vine.position.y = Math.random() * -200;
+                owner.addChild(vine);
+                vine.position.x = 200;
+                this.vines.push(vine);
+            }
+            ;
+            this.speed = 1;
+        }
+        GameVines.prototype.setPosition = function (position) {
+            for (var i = 0; i < this.vines.length; i++) {
+                var vine = this.vines[i];
+                var pos = -(position + vine.offset) * vine.speed;
+                pos %= this.owner.width;
+                pos += this.owner.width;
+                vine.position.x = pos;
+            }
+            ;
+        };
+        return GameVines;
+    }());
+    ECS.GameVines = GameVines;
+})(ECS || (ECS = {}));
+/* =========================================================================
+ *
+ *  GameLoad.ts
+ *  system using for load the game resources
+ *
+ * ========================================================================= */
+/// <reference path="./System.ts" />
+/// <reference path="./GameAudio.ts" />
+/// <reference path="./GameKernel.ts" />
+/// <reference path="./GameView.ts" />
+/// <reference path="./GameBackGround.ts" />
+var ECS;
+(function (ECS) {
+    function update() {
+        ECS.GameConfig.game.update();
+        requestAnimationFrame(update);
+    }
+    ECS.update = update;
+    var MainSystem = /** @class */ (function (_super) {
+        __extends(MainSystem, _super);
+        function MainSystem(othSystems) {
+            var _this = _super.call(this, "main") || this;
+            _this.OtherSystems = othSystems;
+            return _this;
+        }
+        MainSystem.prototype.Execute = function () {
+            _super.prototype.Execute.call(this);
+            this.OtherSystems.forEach(function (key, val) {
+                val.Execute();
+            });
+        };
+        return MainSystem;
+    }(ECS.System));
+    ECS.MainSystem = MainSystem;
+    var LoadingSystem = /** @class */ (function (_super) {
+        __extends(LoadingSystem, _super);
+        function LoadingSystem() {
+            var _this = _super.call(this, "loading") || this;
+            //device info detect
+            _this.device = new Utils.DeviceDetect();
+            //console.log(this.device.PrintInfo());
+            ECS.GameConfig.audio = new ECS.GameAudio();
+            //game resources list
+            _this.resourceList =
+                [
+                    "img/doroCat.png",
+                    "img/dash_stock.png",
+                    "img/blade.png",
+                    "img/platform.png",
+                    "img/bg_up.png",
+                    "img/bg_down.png",
+                    "img/floatingGround.png",
+                    "assets/background/BackgroundAssets.json",
+                    "assets/food/food.json",
+                    "assets/playUI/playPanel.json",
+                    "assets/playUI/number.json",
+                    "assets/character/chara1.json",
+                    "assets/specialEffect/WorldAssets-hd.json"
+                ];
+            return _this;
+        }
+        LoadingSystem.prototype.loadingAnime = function () {
+            var loadingTextures = [];
+            for (var i = 0; i < 3; i++) {
+                var texture = PIXI.loader.resources['img/Loading' + (i + 1) + '.png'].texture;
+                loadingTextures.push(texture);
+            }
+            var loading = new PIXI.extras.AnimatedSprite(loadingTextures);
+            loading.x = this.width * 0.5;
+            loading.y = this.height * 0.7;
+            loading.anchor.set(0.5);
+            loading.animationSpeed = 0.1;
+            loading.play();
+            this.loadingStage.addChild(loading);
+        };
+        LoadingSystem.prototype.Init = function () {
+            var _this = this;
+            _super.prototype.Init.call(this);
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            //init app for game(add some fundmental options)
+            this.app = new PIXI.Application({
+                width: this.width,
+                height: this.height,
+                antialias: true,
+                transparent: false,
+                resolution: 1 // default: 1
+            });
+            //setting renderer
+            this.app.renderer.backgroundColor = 0x061639;
+            this.app.renderer.view.style.position = "absolute";
+            this.app.renderer.view.style.display = "block";
+            this.app.renderer.autoResize = true;
+            this.app.renderer.resize(this.width, this.height);
+            document.body.appendChild(this.app.view);
+            this.loadingFrames = [
+                "img/Loading1.png",
+                "img/Loading2.png",
+                "img/Loading3.png"
+            ];
+            this.bgImage = "img/bg.png";
+            this.logoImage = "img/logo.png";
+            //loading panel
+            PIXI.loader
+                .add(this.loadingFrames)
+                .add(this.bgImage)
+                .add(this.logoImage)
+                .load(function () {
+                console.log("show loading panel!");
+                //show bg image
+                _this.loadingStage = new PIXI.Container();
+                var load_bg = new PIXI.Sprite(PIXI.loader.resources[_this.bgImage].texture);
+                load_bg.anchor.x = 0;
+                load_bg.anchor.y = 0;
+                load_bg.height = _this.height;
+                load_bg.width = _this.width;
+                _this.loadingStage.addChild(load_bg);
+                //show logo
+                var logo = new PIXI.Sprite(PIXI.loader.resources[_this.logoImage].texture);
+                logo.anchor.set(0.5);
+                logo.position.x = _this.width * 0.5;
+                logo.position.y = _this.height * 0.4;
+                var logoRatio = logo.width / logo.height;
+                logo.height = _this.height / 2;
+                logo.width = logo.height * logoRatio;
+                _this.loadingStage.addChild(logo);
+                _this.loadingAnime();
+                //TODO! progress bar animation
+                _this.app.stage.addChild(_this.loadingStage);
+                //read game resources
+                _this.LoadGameResources();
+            });
+        };
+        LoadingSystem.prototype.LoadGameResources = function () {
+            var _this = this;
+            PIXI.loader
+                .add(this.resourceList)
+                .load(function () {
+                console.log("data assets loaded!");
+                //remove loading panel
+                _this.app.stage.removeChild(_this.loadingStage);
+                //setup game main system 
+                ECS.GameConfig.app = _this.app;
+                ECS.GameConfig.width = _this.width;
+                ECS.GameConfig.height = _this.height;
+                ECS.GameConfig.allSystem = new Utils.HashSet();
+                var allSystem = ECS.GameConfig.allSystem;
+                allSystem.set("background", new ECS.GameBackGroundSystem());
+                allSystem.set("view", new ECS.GameViewSystem());
+                allSystem.set("kernel", new ECS.GameKernelSystem());
+                var mainSystem = new MainSystem(allSystem);
+                //game start
+                ECS.GameConfig.game = allSystem.get("kernel");
+                //bind event 
+                var evtSys = new EventListenerSystem();
+                evtSys.bindEvent();
+                var game = ECS.GameConfig.game;
+                //show hud
+                game.view.showHud();
+                update();
+                game.start();
+                ECS.GameConfig.gameMode = ECS.GAMEMODE.PLAYING;
+                ECS.GameConfig.playerMode = ECS.PLAYMODE.RUNNING;
+            });
+        };
+        LoadingSystem.prototype.Execute = function () {
+            _super.prototype.Execute.call(this);
+        };
+        return LoadingSystem;
+    }(ECS.System));
+    ECS.LoadingSystem = LoadingSystem;
+    var EventListenerSystem = /** @class */ (function (_super) {
+        __extends(EventListenerSystem, _super);
+        function EventListenerSystem() {
+            return _super.call(this, "eventlistener") || this;
+        }
+        EventListenerSystem.prototype.bindEvent = function () {
+            //for pc version
+            window.addEventListener("keydown", this.onKeyDown, true);
+            window.addEventListener("keyup", this.onKeyUp, true);
+            window.addEventListener("touchstart", this.onTouchStart, true);
+        };
+        EventListenerSystem.prototype.onKeyDown = function (event) {
+            if (event.keyCode == 32 || event.keyCode == 38) {
+                if (ECS.GameConfig.game.isPlaying && !ECS.GameConfig.game.player.startJump && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
+                    ECS.GameConfig.game.player.jump();
+                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.game.player.isJumped && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
+                    ECS.GameConfig.game.player.jumpTwo();
+            }
+            else if (event.keyCode == 40) {
+                //console.log(GameConfig.game.player.onGround);
+                if (ECS.GameConfig.game.isPlaying && !ECS.GameConfig.game.player.isJumped && ECS.GameConfig.game.player.onGround) {
+                    ECS.GameConfig.game.player.slide(true);
+                }
+            }
+            else if (event.keyCode == 39) {
+                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.JAPANMODE) {
+                    ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.dashFrames;
+                    ECS.GameConfig.game.player.view.play();
+                    ECS.GameConfig.game.player.ninjiaOperate();
+                }
+                else if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.INDONMODE) {
+                    ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.runningFrames;
+                    ECS.GameConfig.game.player.view.play();
+                    ECS.GameConfig.game.player.indoOperate();
+                }
+            }
+        };
+        EventListenerSystem.prototype.onKeyUp = function (event) {
+            if (event.keyCode == 40) {
+                if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.game.player.isSlide) {
+                    ECS.GameConfig.game.player.slide(false);
+                }
+            }
+        };
+        EventListenerSystem.prototype.onTouchStart = function (event) {
+            if (event.target.type !== 'button') {
+                if (ECS.GameConfig.game.isPlaying && !(ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1))
+                    ECS.GameConfig.game.player.jump();
+                if (ECS.GameConfig.game.isPlaying && (ECS.GameConfig.playerMode == ECS.PLAYMODE.JUMPING1))
+                    ECS.GameConfig.game.player.jumpTwo();
+            }
+        };
+        return EventListenerSystem;
+    }(ECS.System));
+    ECS.EventListenerSystem = EventListenerSystem;
+})(ECS || (ECS = {}));
+/// <reference path="./core/Component.ts" />
+/// <reference path="./core/System.ts" />
+/// <reference path="./core/Entity.ts" />
+/// <reference path="./core/HashSet.ts" />
+/// <reference path="./core/GameLoad.ts" />
+var load = function () {
+    var load_system = new ECS.LoadingSystem();
+    load_system.Init();
+};
+document.getElementById("btn_play").onclick = function () {
+    document.getElementById("global").style.display = "none";
+    load();
+};
 /* =========================================================================
  *
  *  GamePartical.ts

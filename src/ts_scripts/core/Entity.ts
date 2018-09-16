@@ -35,14 +35,5 @@ module ECS {
         }
     }
 
-
-    export class ThreeJsMoveEntity {
-        startPos: [number,number,number];
-        endPos:[number,number,number];
-        constructor(startPos: [number,number,number],endPos: [number,number,number]) {
-            this.startPos = startPos;
-            this.endPos = endPos;
-        }
-    }
 }
 

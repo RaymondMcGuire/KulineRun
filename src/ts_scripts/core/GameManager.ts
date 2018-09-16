@@ -5,10 +5,10 @@
  *
  * ========================================================================= */
 /// <reference path="./GameItems.ts" />
+/// <reference path="./GameBackGround.ts" />
 module ECS {
     declare var PIXI: any;
     declare var data: any;
-    declare var FidoAudio: any;
     
 
     export class GameObjectPool{
@@ -71,27 +71,12 @@ module ECS {
         update()
         {
             this.position = GameConfig.camera.x + GameConfig.width * 2;
-            // look at where we are..
-            var relativePosition = this.position - this.currentSegment.start;
             
+            var relativePosition = this.position - this.currentSegment.start;
+            // console.log("relativePosition:"+relativePosition);
+            // console.log("length:"+this.currentSegment.length);
             if(relativePosition > this.currentSegment.length)
             {
-                
-                    
-                if(this.engine.joyrideMode)
-                {
-                    var nextSegment = this.startSegment
-                    nextSegment.start = this.currentSegment.start + this.currentSegment.length;
-                    this.currentSegment = nextSegment;
-            
-                    for ( var i = 0; i < this.currentSegment.floor.length; i++) 
-                    {
-                        this.engine.floorManager.addFloor(this.currentSegment.start + this.currentSegment.floor[i]);
-                    }
-                    
-                    return;
-                }
-                
                 
                 //var nextSegment = this.startSegment;//this.sections[this.count % this.sections.length];
                 var nextSegment = this.sections[this.count % this.sections.length];
@@ -100,10 +85,14 @@ module ECS {
                 nextSegment.start = this.currentSegment.start + this.currentSegment.length;
                 
                 this.currentSegment = nextSegment;
-            
+                
                 // add the elements!
-                for ( var i = 0; i < this.currentSegment.floor.length; i++) 
+                //console.log(this.currentSegment.floor.length);
+                var floors = this.currentSegment.floor;
+                var length = floors.length/1.0;
+                for ( var i = 0; i < length; i++) 
                 {
+                   //console.log(this.currentSegment.start + this.currentSegment.floor[i]);
                    this.engine.floorManager.addFloor(this.currentSegment.start + this.currentSegment.floor[i]);
                 }
                 
@@ -289,6 +278,7 @@ module ECS {
             var enemy = this.enemyPool.getObject();
             enemy.position.x = x;
             enemy.position.y = y;
+            enemy.view.textures = enemy.moveingFrames;
             enemy.view.play();
             this.enemies.push(enemy);
             this.engine.view.gameFront.addChild(enemy.view);
@@ -493,11 +483,14 @@ module ECS {
     }
 
     export class Floor{
+        position:any;
+        view:any;
         constructor(){
-            PIXI.Sprite.call(this,PIXI.Texture.fromImage("img/bg_down.png"));
+            this.position = new PIXI.Point();
+            var view =  new PIXI.Sprite(PIXI.Texture.fromFrame("img/bg_down.png"));
+            this.view = view;
         }
     }
-    Floor.prototype = Object.create( PIXI.Sprite.prototype );
 
     export class FloorManager{
         engine:any;
@@ -516,11 +509,11 @@ module ECS {
             for ( var i = 0; i < this.floors.length; i++) 
             {
                 var floor = this.floors[i];
-                floor.position.x = floor.x - GameConfig.camera.x -16;
+                floor.view.position.x = floor.position.x - GameConfig.camera.x -16;
                 
                 if(floor.position.x < -1135 - GameConfig.xOffset -16)
                 {
-                    //this.floorPool.returnObject(floor)
+                    //console.log("delete floor");
                     this.floors.splice(i, 1);
                     i--;
                     this.engine.view.gameFront.removeChild(floor);
@@ -531,9 +524,11 @@ module ECS {
         addFloor(floorData)
         {
             var floor = this.floorPool.getObject();
-            floor.x = floorData;
-            floor.position.y = 520;
-            this.engine.view.gameFront.addChild(floor);
+            floor.position.x = floorData;
+            //floor.position.y = 520;
+            floor.position.y = (<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteHeight;
+            floor.view.position.y = floor.position.y;
+            this.engine.view.gameFront.addChild(floor.view);
             this.floors.push(floor);
         }
 
@@ -542,7 +537,6 @@ module ECS {
             for (var i = 0; i < this.floors.length; i++) 
             {
                 var floor = this.floors[i];
-                //this.floorPool.returnObject(floor);
                 this.engine.view.gameFront.removeChild(floor);
             }
             
@@ -594,9 +588,8 @@ module ECS {
                 
                     if(ydist > -enemy.height/2-20 +floatRange&& ydist < enemy.height/2 -floatRange)
                     {
-
+                            //attack cat and get point
                             GameConfig.game.score += 10;
-                            GameConfig.game.view.score.jump();
                             switch(GameConfig.specialMode){
                                 case SPECIALMODE.NONE:
                                     player.die();
@@ -658,10 +651,10 @@ module ECS {
                         {
                             //console.log("cat eat food!");
                             enemy.view.textures = enemy.stealFrames;
+                            enemy.view.play();
                             enemy.isEatNow = true;
                             this.engine.pickupManager.removePickup(j,false,enemy);
                             //this.engine.pickup(i);
-    
                         }
                     }
                 }
@@ -712,19 +705,14 @@ module ECS {
                     {
 
                         if(player.position.y < plat.position.y-10){
+                            
+                            //player jump to the plat
                             player.position.y = plat.position.y-plat.height/2-player.height/2;
-
-
-                            //console.log("plat!");
                             player.ground = player.position.y;
-                            // player.startJump = false;
-                            // player.isJumped = false;
-                            // player.cnt =0;
 
                             GameConfig.isOnPlat = true;
                             player.onGround = true;
                         }
-
                     }
                 }
             }
@@ -750,9 +738,11 @@ module ECS {
                 }
                 
                 if(flag){
+                    
                     GameConfig.isOnPlat = false;;
-                    player.ground = 477;
+                    player.ground = this.engine.player.floorHeight;
                     GameConfig.playerMode = PLAYMODE.FALL;
+                    //console.log("leave plat");
                 }
             }
 
@@ -766,12 +756,12 @@ module ECS {
   
             player.onGround = false;
             
-            if(player.position.y > 610)
+            if(player.position.y > GameConfig.height)
             {
                 if(this.engine.isPlaying)
                 {
                     player.boil();
-                    this.engine.view.doSplash();
+                    //this.engine.view.doSplash();
                     this.engine.gameover();
                 }
                 else
@@ -788,7 +778,7 @@ module ECS {
                     if(player.bounce === 0) {
                         player.bounce++;
                         player.boil();
-                        this.engine.view.doSplash();
+                        //this.engine.view.doSplash();
                     }
 
                     return;
@@ -798,9 +788,10 @@ module ECS {
             for (var i = 0; i < max; i++) 
             {
                 var floor = floors[i];
-                var xdist = floor.x - player.position.x + 1135;
-                
-                if(player.position.y > 477)
+                var xdist = floor.position.x - player.position.x + 1135;
+
+                //console.log(player.position.y + "/" + this.engine.player.floorHeight);
+                if(player.position.y >= this.engine.player.floorHeight)
                 {
                     if(xdist > 0 && xdist < 1135)
                     {
@@ -812,7 +803,7 @@ module ECS {
                             {						
                                 return;
                             }
-                            //FidoAudio.play('thudBounce');
+
                                 
                             player.speed.y *= -0.7;
                             player.speed.x *= 0.8;
@@ -838,7 +829,7 @@ module ECS {
                         
                         if(!player.isFlying)
                         {
-                            player.position.y = 478;
+                            player.position.y = this.engine.player.floorHeight;
                             player.onGround = true;
                             
                         }	
@@ -846,11 +837,6 @@ module ECS {
                 }
             }
 
-            if(player.position.y < 0)
-            {
-                //player.position.y = 0;
-                //player.speed.y *= 0;
-            }
         }
     }
 
