@@ -9,7 +9,6 @@
 /// <reference path="./Utils.ts" />
  module ECS{
 
-    declare var CocoonJS:any;
     declare var Howl:any;
     declare var Howler:any;
     declare var TweenLite:any;
@@ -25,162 +24,113 @@
 
         soundList:any;
         constructor(){
-            this.soundList = [{
-                src: 'audio/mainLoop',
-                volume: 0.6,
-                maxVolume: 0.6,
-                loop: true,
-                autoPlay: false,
-                type: 'music',
-                name: 'gameMusic'
-            }];
+            this.soundList = [
+                {   src: './audio/startScreen',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'StartMusic'},
+                {
+                    src: './audio/gameScreen',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'GameMusic'},
+                {
+                    src: './audio/jump01',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'jump'},
+                {
+                    src: './audio/indoNTiger',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'indoMode'},
+                {
+                    src: './audio/ninjiaStart',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'ninjiaMode'},
+                {
+                    src: './audio/ninjiaAttack',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'ninjiaModeAttack'},
+                {
+                    src: './audio/superMario',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'superMarioMode'},
+                {
+                    src: './audio/catCome',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'catCome'},
+                {
+                    src: './audio/catDead',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'catDead'},
+                {
+                    src: './audio/pickUpFood',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'pickUpFood'},
+                {
+                    src: './audio/playerDead',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'playerDead'}
+            ];
             this.init();
         }
-
+        superMario
         init() {
-            if (this.device.cocoonJS === true) {
-                for (var i = 0; i < this.soundList.length; i++) {
-                    var cSound = this.soundList[i];
-    
-                    switch (cSound.type) {
-                        case 'music':
-    
-                            CocoonJS.App.markAsMusic(cSound.src + ".ogg");
-    
-                            var music = document.createElement('audio');
-                            music.src = cSound.src + ".ogg";
-                            music.loop = cSound.loop;
-    
-                            cSound.audio = new CocoonJS.Music().setAudio(music);
-                            cSound.audio.volume(cSound.volume);
-    
-                            this.soundPool[cSound.name] = cSound;
-    
-                            if (cSound.autoPlay === true) this.soundPool[cSound.name].audio.play();
-    
-                            break;
-    
-                        case 'sfx':
-    
-                            var sfx = new Audio();
-                            sfx.src = cSound.src + ".ogg";
-                            cSound.audio = new CocoonJS.Audio().setAudio(sfx);
-                            cSound.audio.volume(cSound.volume);
-    
-                            this.soundPool[cSound.name] = cSound;
-    
-                            break;
-                    }
-                }
-            } else {
-                for (var i = 0; i < this.soundList.length; i++) {
-                    var cSound = this.soundList[i];
-    
-                    cSound.audio = new Howl({
-                        urls: [cSound.src + ".mp3"],
-                        autoplay: cSound.autoPlay,
-                        loop: cSound.loop,
-                        volume: cSound.volume,
-                        onload: function() {
-                            //alert('loaded');
-                        },
-                        onend: function() {
-                            //alert('finished playing sound');
-                        },
-                        onloaderror: function() {
-                            alert('ERROR : Failed to load ' + cSound.src + ".m4a");
-                        },
-                        onplay: function() {
-                            //alert('playing');
-                        }
-                    });
-    
-                    this.soundPool[cSound.name] = cSound;
-                }
-            }
-    
-            if (this.localData.get('gameMuted') === 'true') this.muteAll();
-        }
-    
-        isMuted() {
-            return this.MUTE_ALL;
-        }
-    
-        muteAll() {
-            this.MUTE_ALL = true;
-            this.localData.store('gameMuted', true);
-    
-            if (this.device.cocoonJS === true) {
-    
-                for (var sKey in this.soundPool) {
-                    var cSound = this.soundPool[sKey];
-    
-                    var holder = {
-                        volume: cSound.audio.getVolume()
-                    };
-    
-                    this.muteOneSound(cSound, holder);
-                }
-            } else {
-                var cHolder = {
-                    volume: 1
-                };
-    
-                TweenLite.to(cHolder, 1, {
-                    volume: 0,
-                    onUpdate: function() {
-                        Howler.volume(this.target.volume);
-                    },
-                    onComplete: function() {
-                        Howler.mute();
-                    }
+
+            for (var i = 0; i < this.soundList.length; i++) {
+                var cSound = this.soundList[i];
+
+                cSound.audio = new Howl({
+                    src: [cSound.src + ".mp3"],
+                    html5: true,
+                    loop:cSound.loop
                 });
+
+                this.soundPool[cSound.name] = cSound;
             }
-        }
-    
-        muteOneSound(cSound, holder) {
-            TweenLite.to(holder, 1, {
-                volume: 0,
-                onUpdate: function() {
-                    cSound.audio.volume(this.target.volume);
-                }
-            });
-        }
-    
-        unMuteOneSound(cSound, holder) {
-            TweenLite.to(holder, 1, {
-                volume: cSound.volume,
-                onUpdate: function() {
-                    cSound.audio.volume(this.target.volume);
-                }
-            });
-        }
-    
-        unMuteAll() {
-            this.MUTE_ALL = false;
-            this.localData.store('gameMuted', false)
-    
-            if (this.device.cocoonJS === true) {
-                for (var sKey in this.soundPool) {
-                    var cSound = this.soundPool[sKey];
-                    this.unMuteOneSound(cSound, {
-                        volume: 0
-                    });
-                }
-            } else {
-                var cHolder = {
-                    volume: 0
-                };
-    
-                Howler.unmute();
-    
-                TweenLite.to(cHolder, 1, {
-                    volume: 1,
-                    onUpdate: function(cObject, sProperty) {
-                        Howler.volume(this.target.volume);
-                    }
-                });
-            }
+            
+
         }
     
         play(id) {
@@ -191,47 +141,15 @@
                 console.log("WARNING :: Couldn't find sound '" + id + "'.");
             }
         }
-    
-        fadeOut(sKey) {
-            var cSound = this.soundPool[sKey];
-    
-            var holder = {
-                volume: 0
-            };
-    
-            this.muteOneSound(cSound, holder);
-        }
-    
-        fadeIn(id, time) {
-            if (!this.soundExists(id)) return;
-    
-            var cSound = this.soundPool[id];
-            var nFadeInTime = time || this.DEFAULT_FADE_IN_TIME;
-    
-            var cHolder = {
-                volume: 0
-            };
-    
-            TweenLite.to(cHolder, nFadeInTime, {
-                volume: cSound.maxVolume,
-                onUpdate: function(cObject, sProperty) {
-                    this.setVolume(id, this.target.volume);
-                }
-            });
-        }
-    
+
         soundExists(id) {
             return this.soundPool.hasOwnProperty(id);
         }
     
         setVolume(id, volume) {
             if (!this.soundExists(id)) return;
-    
-            if (this.MUTE_ALL === true) {
-                this.soundPool[id].volume = volume;
-            } else {
-                this.soundPool[id].audio.volume(volume);
-            }
+
+            Howler.volume(volume);
         }
     
         stop(id) {

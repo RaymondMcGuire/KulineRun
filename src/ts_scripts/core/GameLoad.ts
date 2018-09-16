@@ -11,6 +11,8 @@
 /// <reference path="./GameBackGround.ts" />
 module ECS {
 
+    declare var PIXI:any;
+
     export function update() {
         GameConfig.game.update();
         requestAnimationFrame(update);
@@ -66,6 +68,11 @@ module ECS {
                 "assets/character/chara1.json",
                 "assets/specialEffect/WorldAssets-hd.json"
             ];
+        }
+
+        playStartScreenMusic(){
+            GameConfig.audio.setVolume('StartMusic', 0.1);
+            GameConfig.audio.play("StartMusic");
         }
 
         loadingAnime(){
@@ -220,6 +227,7 @@ module ECS {
         }
         onKeyDown(event:any) {
             if (event.keyCode == 32 || event.keyCode == 38) {
+                GameConfig.audio.play("jump");
                 if (GameConfig.game.isPlaying && !GameConfig.game.player.startJump&& !GameConfig.game.player.isPlayingNinjiaEffect) 
                     GameConfig.game.player.jump();
                 if (GameConfig.game.isPlaying && GameConfig.game.player.isJumped &&  !GameConfig.game.player.isPlayingNinjiaEffect) 
@@ -234,10 +242,12 @@ module ECS {
             }else if(event.keyCode == 39) {
                
                 if (GameConfig.game.isPlaying && GameConfig.specialMode == SPECIALMODE.JAPANMODE){
+                    GameConfig.audio.play("ninjiaModeAttack");
                     GameConfig.game.player.view.textures =  GameConfig.game.player.dashFrames;
                     GameConfig.game.player.view.play();
                     GameConfig.game.player.ninjiaOperate();
                 }else if(GameConfig.game.isPlaying && GameConfig.specialMode == SPECIALMODE.INDONMODE){
+                    GameConfig.audio.play("indoMode");
                     GameConfig.game.player.view.textures =  GameConfig.game.player.runningFrames;
                     GameConfig.game.player.view.play();
                     GameConfig.game.player.indoOperate();

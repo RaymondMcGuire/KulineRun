@@ -1,75 +1,71 @@
-html,
-body {
-    overflow: hidden;
-    background: white;
+body,
+html {
+    height: 100%;
 }
 
 #global {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 0;
-    background: url('bg.png') no-repeat center center fixed;
-    overflow: hidden;
-    -moz-background-size: cover;
-    -webkit-background-size: cover;
-    -ms-background-size: cover;
-    -o-background-size: cover;
+    background-image: url('bg.png');
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
     background-size: cover;
 }
 
-#leftUpCorner {
-    position: absolute;
-    top: 5%;
-    left: 5%;
+@media (min-width: 813px) {
+    #btn_story img {
+        width: 30%;
+        height: 30%;
+    }
+    #btn_htp img {
+        width: 30%;
+        height: 30%;
+    }
+    #btn_setting img {
+        width: 30%;
+        height: 30%;
+    }
+    #btn_exit img {
+        width: 30%;
+        height: 30%;
+    }
+    #btn_play img {
+        width: 100%;
+        height: 100%;
+    }
+    #btn_score img {
+        width: 100%;
+        height: 100%;
+    }
 }
 
-#leftDownCorner {
-    position: absolute;
-    bottom: 5%;
-    left: 5%;
+@media (max-width: 812px) {
+    #btn_story img {
+        width: 25%;
+        height: 25%;
+    }
+    #btn_htp img {
+        width: 25%;
+        height: 25%;
+    }
+    #btn_setting img {
+        width: 25%;
+        height: 25%;
+    }
+    #btn_exit img {
+        width: 25%;
+        height: 25%;
+    }
+    #btn_play img {
+        width: 50%;
+        height: 50%;
+    }
+    #btn_score img {
+        width: 50%;
+        height: 50%;
+    }
 }
 
-#rightUpCorner {
-    position: absolute;
-    top: 5%;
-    right: 5%;
-}
-
-#rightDownCorner {
-    position: absolute;
-    bottom: 5%;
-    right: 5%;
-}
-
-#groupMainMenu {
-    position: absolute;
-    bottom: 5%;
-    width: 100%;
-}
-
-#btn_play {
-    float: left;
-    position: relative;
-    left: 20%;
-}
-
-#btn_score {
-    float: right;
-    position: relative;
-    right: 20%;
-}
-
-
-/* #btn_play div {
-    padding: 0.1em 0 0 0;
-    margin: 0 0;
-    cursor: pointer;
-} */
-
-#menu img:hover {
+#global img:hover {
     color: #f66439;
     -webkit-transform: scaleY(1.0);
     transform: scaleY(1.1);

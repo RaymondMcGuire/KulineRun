@@ -5,14 +5,18 @@
 /// <reference path="./core/GameLoad.ts" />
 declare var PIXI;
 
-var load = function () {
-        let load_system = new ECS.LoadingSystem();
+
+let load_system = new ECS.LoadingSystem();
+load_system.playStartScreenMusic();
+
+
+var startGame = function () {
         load_system.Init();
 }
 
 
 document.getElementById("btn_play").onclick= function(){
         document.getElementById("global").style.display = "none";
-        load();
+        startGame();
 }
 

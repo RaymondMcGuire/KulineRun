@@ -278,7 +278,6 @@ module ECS {
 
         indoOperate(){
             if(!this.isPlayingInoEffect){
-                
                 //chara animation
                 this.view.textures = this.shootFrame;
                 this.view.play();
@@ -336,6 +335,8 @@ module ECS {
                 this.speed.x/=2;
                 this.view.removeChild(this.marioEffect);
                 this.resetSpecialFoods();
+                GameConfig.audio.stop("superMarioMode");
+                GameConfig.audio.play("GameMusic");
             }
         }
 
@@ -557,6 +558,7 @@ module ECS {
         {
             if(this.isDead) return;
 
+            GameConfig.audio.play("playerDead");
             TweenLite.to(GameConfig.time, 0.5, {
                 speed : 0.1, 
                 ease : Cubic.easeOut, 
@@ -675,7 +677,8 @@ module ECS {
             
             //this.explosion.explode();
             //this.view.addChild(this.explosion);
-        
+            
+            GameConfig.audio.play("catDead");
             this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"))
         }
 
@@ -694,6 +697,7 @@ module ECS {
                     this.isEatNow = false;
                     this.view.textures = this.moveingFrames;
                     this.view.play();
+                    GameConfig.audio.play("catCome");
                 }
             }
             this.view.position.y = this.position.y;

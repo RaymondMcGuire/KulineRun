@@ -479,138 +479,116 @@ var ECS;
             this.MUTE_ALL = false;
             this.device = new Utils.DeviceDetect();
             this.localData = new ECS.GameLocalData(ECS.GameConfig.localID);
-            this.soundList = [{
-                    src: 'audio/mainLoop',
+            this.soundList = [
+                { src: './audio/startScreen',
                     volume: 0.6,
                     maxVolume: 0.6,
                     loop: true,
                     autoPlay: false,
                     type: 'music',
-                    name: 'gameMusic'
-                }];
+                    name: 'StartMusic' },
+                {
+                    src: './audio/gameScreen',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'GameMusic'
+                },
+                {
+                    src: './audio/jump01',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'jump'
+                },
+                {
+                    src: './audio/indoNTiger',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'indoMode'
+                },
+                {
+                    src: './audio/ninjiaStart',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'ninjiaMode'
+                },
+                {
+                    src: './audio/ninjiaAttack',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'ninjiaModeAttack'
+                },
+                {
+                    src: './audio/superMario',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: true,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'superMarioMode'
+                },
+                {
+                    src: './audio/catCome',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'catCome'
+                },
+                {
+                    src: './audio/catDead',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'catDead'
+                },
+                {
+                    src: './audio/pickUpFood',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'pickUpFood'
+                },
+                {
+                    src: './audio/playerDead',
+                    volume: 0.6,
+                    maxVolume: 0.6,
+                    loop: false,
+                    autoPlay: false,
+                    type: 'music',
+                    name: 'playerDead'
+                }
+            ];
             this.init();
         }
         GameAudio.prototype.init = function () {
-            if (this.device.cocoonJS === true) {
-                for (var i = 0; i < this.soundList.length; i++) {
-                    var cSound = this.soundList[i];
-                    switch (cSound.type) {
-                        case 'music':
-                            CocoonJS.App.markAsMusic(cSound.src + ".ogg");
-                            var music = document.createElement('audio');
-                            music.src = cSound.src + ".ogg";
-                            music.loop = cSound.loop;
-                            cSound.audio = new CocoonJS.Music().setAudio(music);
-                            cSound.audio.volume(cSound.volume);
-                            this.soundPool[cSound.name] = cSound;
-                            if (cSound.autoPlay === true)
-                                this.soundPool[cSound.name].audio.play();
-                            break;
-                        case 'sfx':
-                            var sfx = new Audio();
-                            sfx.src = cSound.src + ".ogg";
-                            cSound.audio = new CocoonJS.Audio().setAudio(sfx);
-                            cSound.audio.volume(cSound.volume);
-                            this.soundPool[cSound.name] = cSound;
-                            break;
-                    }
-                }
-            }
-            else {
-                for (var i = 0; i < this.soundList.length; i++) {
-                    var cSound = this.soundList[i];
-                    cSound.audio = new Howl({
-                        urls: [cSound.src + ".mp3"],
-                        autoplay: cSound.autoPlay,
-                        loop: cSound.loop,
-                        volume: cSound.volume,
-                        onload: function () {
-                            //alert('loaded');
-                        },
-                        onend: function () {
-                            //alert('finished playing sound');
-                        },
-                        onloaderror: function () {
-                            alert('ERROR : Failed to load ' + cSound.src + ".m4a");
-                        },
-                        onplay: function () {
-                            //alert('playing');
-                        }
-                    });
-                    this.soundPool[cSound.name] = cSound;
-                }
-            }
-            if (this.localData.get('gameMuted') === 'true')
-                this.muteAll();
-        };
-        GameAudio.prototype.isMuted = function () {
-            return this.MUTE_ALL;
-        };
-        GameAudio.prototype.muteAll = function () {
-            this.MUTE_ALL = true;
-            this.localData.store('gameMuted', true);
-            if (this.device.cocoonJS === true) {
-                for (var sKey in this.soundPool) {
-                    var cSound = this.soundPool[sKey];
-                    var holder = {
-                        volume: cSound.audio.getVolume()
-                    };
-                    this.muteOneSound(cSound, holder);
-                }
-            }
-            else {
-                var cHolder = {
-                    volume: 1
-                };
-                TweenLite.to(cHolder, 1, {
-                    volume: 0,
-                    onUpdate: function () {
-                        Howler.volume(this.target.volume);
-                    },
-                    onComplete: function () {
-                        Howler.mute();
-                    }
+            for (var i = 0; i < this.soundList.length; i++) {
+                var cSound = this.soundList[i];
+                cSound.audio = new Howl({
+                    src: [cSound.src + ".mp3"],
+                    html5: true,
+                    loop: cSound.loop
                 });
-            }
-        };
-        GameAudio.prototype.muteOneSound = function (cSound, holder) {
-            TweenLite.to(holder, 1, {
-                volume: 0,
-                onUpdate: function () {
-                    cSound.audio.volume(this.target.volume);
-                }
-            });
-        };
-        GameAudio.prototype.unMuteOneSound = function (cSound, holder) {
-            TweenLite.to(holder, 1, {
-                volume: cSound.volume,
-                onUpdate: function () {
-                    cSound.audio.volume(this.target.volume);
-                }
-            });
-        };
-        GameAudio.prototype.unMuteAll = function () {
-            this.MUTE_ALL = false;
-            this.localData.store('gameMuted', false);
-            if (this.device.cocoonJS === true) {
-                for (var sKey in this.soundPool) {
-                    var cSound = this.soundPool[sKey];
-                    this.unMuteOneSound(cSound, {
-                        volume: 0
-                    });
-                }
-            }
-            else {
-                var cHolder = {
-                    volume: 0
-                };
-                Howler.unmute();
-                TweenLite.to(cHolder, 1, {
-                    volume: 1,
-                    onUpdate: function (cObject, sProperty) {
-                        Howler.volume(this.target.volume);
-                    }
-                });
+                this.soundPool[cSound.name] = cSound;
             }
         };
         GameAudio.prototype.play = function (id) {
@@ -621,40 +599,13 @@ var ECS;
                 console.log("WARNING :: Couldn't find sound '" + id + "'.");
             }
         };
-        GameAudio.prototype.fadeOut = function (sKey) {
-            var cSound = this.soundPool[sKey];
-            var holder = {
-                volume: 0
-            };
-            this.muteOneSound(cSound, holder);
-        };
-        GameAudio.prototype.fadeIn = function (id, time) {
-            if (!this.soundExists(id))
-                return;
-            var cSound = this.soundPool[id];
-            var nFadeInTime = time || this.DEFAULT_FADE_IN_TIME;
-            var cHolder = {
-                volume: 0
-            };
-            TweenLite.to(cHolder, nFadeInTime, {
-                volume: cSound.maxVolume,
-                onUpdate: function (cObject, sProperty) {
-                    this.setVolume(id, this.target.volume);
-                }
-            });
-        };
         GameAudio.prototype.soundExists = function (id) {
             return this.soundPool.hasOwnProperty(id);
         };
         GameAudio.prototype.setVolume = function (id, volume) {
             if (!this.soundExists(id))
                 return;
-            if (this.MUTE_ALL === true) {
-                this.soundPool[id].volume = volume;
-            }
-            else {
-                this.soundPool[id].audio.volume(volume);
-            }
+            Howler.volume(volume);
         };
         GameAudio.prototype.stop = function (id) {
             this.soundPool[id].audio.stop();
@@ -1432,6 +1383,7 @@ var ECS;
                             cnt++;
                         }
                     }
+                    ECS.GameConfig.audio.play("pickUpFood");
                     var otherCnt = 4 - cnt;
                     var specialMode = ECS.SPECIALMODE.NINJAMODE;
                     if (cnt > otherCnt) {
@@ -1440,12 +1392,14 @@ var ECS;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.shinobiEffect2);
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.shinobiEffect3);
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.backEffect);
+                        ECS.GameConfig.audio.play("ninjiaMode");
                         //console.log("change special mode:japan");
                     }
                     else if (cnt < otherCnt) {
                         specialMode = ECS.SPECIALMODE.INDONMODE;
                         ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.indoEffect);
+                        ECS.GameConfig.audio.play("indoMode");
                         //console.log("change special mode:indo");
                     }
                     else {
@@ -1454,6 +1408,8 @@ var ECS;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.marioEffect);
                         ECS.GameConfig.game.player.speed.x *= 2;
                         //console.log("change special mode:ninja");
+                        ECS.GameConfig.audio.stop("GameMusic");
+                        ECS.GameConfig.audio.play("superMarioMode");
                     }
                     ECS.GameConfig.specialMode = specialMode;
                     this.canPickOrNot = false;
@@ -1627,6 +1583,7 @@ var ECS;
                         if (ydist > -pickup.height / 2 - 20 && ydist < pickup.height / 2) {
                             //console.log("cat eat food!");
                             enemy.view.textures = enemy.stealFrames;
+                            ECS.GameConfig.audio.play("catCome");
                             enemy.view.play();
                             enemy.isEatNow = true;
                             this.engine.pickupManager.removePickup(j, false, enemy);
@@ -1977,6 +1934,8 @@ var ECS;
                 this.speed.x /= 2;
                 this.view.removeChild(this.marioEffect);
                 this.resetSpecialFoods();
+                ECS.GameConfig.audio.stop("superMarioMode");
+                ECS.GameConfig.audio.play("GameMusic");
             }
         };
         GameCharacter.prototype.indoMode = function () {
@@ -2140,6 +2099,7 @@ var ECS;
         GameCharacter.prototype.die = function () {
             if (this.isDead)
                 return;
+            ECS.GameConfig.audio.play("playerDead");
             TweenLite.to(ECS.GameConfig.time, 0.5, {
                 speed: 0.1,
                 ease: Cubic.easeOut,
@@ -2222,6 +2182,7 @@ var ECS;
             //if(!this.explosion) this.explosion = new Explosion();
             //this.explosion.explode();
             //this.view.addChild(this.explosion);
+            ECS.GameConfig.audio.play("catDead");
             this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"));
         };
         GameEnemy.prototype.update = function () {
@@ -2237,6 +2198,7 @@ var ECS;
                     this.isEatNow = false;
                     this.view.textures = this.moveingFrames;
                     this.view.play();
+                    ECS.GameConfig.audio.play("catCome");
                 }
             }
             this.view.position.y = this.position.y;
@@ -2429,7 +2391,9 @@ var ECS;
             this.player.view.visible = true;
             this.segmentManager.chillMode = false;
             this.bulletMult = 1;
-            ECS.GameConfig.audio.play("gameMusic");
+            ECS.GameConfig.audio.stop("StartMusic");
+            ECS.GameConfig.audio.setVolume('GameMusic', 0.5);
+            ECS.GameConfig.audio.play("GameMusic");
         };
         GameKernelSystem.prototype.update = function () {
             //console.log("game update!!");
@@ -2591,6 +2555,10 @@ var ECS;
                 ];
             return _this;
         }
+        LoadingSystem.prototype.playStartScreenMusic = function () {
+            ECS.GameConfig.audio.setVolume('StartMusic', 0.1);
+            ECS.GameConfig.audio.play("StartMusic");
+        };
         LoadingSystem.prototype.loadingAnime = function () {
             var loadingTextures = [];
             for (var i = 0; i < 3; i++) {
@@ -2714,6 +2682,7 @@ var ECS;
         };
         EventListenerSystem.prototype.onKeyDown = function (event) {
             if (event.keyCode == 32 || event.keyCode == 38) {
+                ECS.GameConfig.audio.play("jump");
                 if (ECS.GameConfig.game.isPlaying && !ECS.GameConfig.game.player.startJump && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
                     ECS.GameConfig.game.player.jump();
                 if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.game.player.isJumped && !ECS.GameConfig.game.player.isPlayingNinjiaEffect)
@@ -2727,11 +2696,13 @@ var ECS;
             }
             else if (event.keyCode == 39) {
                 if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.JAPANMODE) {
+                    ECS.GameConfig.audio.play("ninjiaModeAttack");
                     ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.dashFrames;
                     ECS.GameConfig.game.player.view.play();
                     ECS.GameConfig.game.player.ninjiaOperate();
                 }
                 else if (ECS.GameConfig.game.isPlaying && ECS.GameConfig.specialMode == ECS.SPECIALMODE.INDONMODE) {
+                    ECS.GameConfig.audio.play("indoMode");
                     ECS.GameConfig.game.player.view.textures = ECS.GameConfig.game.player.runningFrames;
                     ECS.GameConfig.game.player.view.play();
                     ECS.GameConfig.game.player.indoOperate();
@@ -2762,13 +2733,14 @@ var ECS;
 /// <reference path="./core/Entity.ts" />
 /// <reference path="./core/HashSet.ts" />
 /// <reference path="./core/GameLoad.ts" />
-var load = function () {
-    var load_system = new ECS.LoadingSystem();
+var load_system = new ECS.LoadingSystem();
+load_system.playStartScreenMusic();
+var startGame = function () {
     load_system.Init();
 };
 document.getElementById("btn_play").onclick = function () {
     document.getElementById("global").style.display = "none";
-    load();
+    startGame();
 };
 /* =========================================================================
  *

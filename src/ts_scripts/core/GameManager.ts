@@ -410,6 +410,7 @@ module ECS {
                         }
                     }
     
+                    GameConfig.audio.play("pickUpFood");
                     var otherCnt = 4-cnt;
                     var specialMode = SPECIALMODE.NINJAMODE;
                     if(cnt > otherCnt){
@@ -417,19 +418,25 @@ module ECS {
                         GameConfig.game.player.view.addChild(GameConfig.game.player.shinobiEffect1);      
                         GameConfig.game.player.view.addChild(GameConfig.game.player.shinobiEffect2);      
                         GameConfig.game.player.view.addChild(GameConfig.game.player.shinobiEffect3);     
-                        GameConfig.game.player.view.addChild(GameConfig.game.player.backEffect);          
+                        GameConfig.game.player.view.addChild(GameConfig.game.player.backEffect);
+                        GameConfig.audio.play("ninjiaMode");
+                        
                         //console.log("change special mode:japan");
                     }else if (cnt < otherCnt){
                         specialMode = SPECIALMODE.INDONMODE
                         GameConfig.tmpTimeClockStart = GameConfig.time.currentTime;
                         GameConfig.game.player.view.addChild(GameConfig.game.player.indoEffect);
+                        GameConfig.audio.play("indoMode");
                         //console.log("change special mode:indo");
                     }else{
                         specialMode = SPECIALMODE.NINJAMODE;
                         GameConfig.tmpTimeClockStart = GameConfig.time.currentTime;
                         GameConfig.game.player.view.addChild(GameConfig.game.player.marioEffect);
                         GameConfig.game.player.speed.x*=2;
+
                         //console.log("change special mode:ninja");
+                        GameConfig.audio.stop("GameMusic");
+                        GameConfig.audio.play("superMarioMode");
                     }
     
                     GameConfig.specialMode = specialMode;
@@ -620,9 +627,6 @@ module ECS {
         
                                 break;
                         }
-          
-
-                        
                     }
                 }
             }
@@ -651,6 +655,7 @@ module ECS {
                         {
                             //console.log("cat eat food!");
                             enemy.view.textures = enemy.stealFrames;
+                            GameConfig.audio.play("catCome");
                             enemy.view.play();
                             enemy.isEatNow = true;
                             this.engine.pickupManager.removePickup(j,false,enemy);
