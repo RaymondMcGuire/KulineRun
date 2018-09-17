@@ -474,7 +474,6 @@ var ECS;
     var GameAudio = /** @class */ (function () {
         function GameAudio() {
             this.soundPool = {};
-            this.loadedCount = 0;
             this.device = new Utils.DeviceDetect();
             this.localData = new ECS.GameLocalData(ECS.GameConfig.localID);
             this.soundList = [
@@ -579,7 +578,6 @@ var ECS;
             this.init();
         }
         GameAudio.prototype.init = function () {
-            var _this = this;
             for (var i = 0; i < this.soundList.length; i++) {
                 var cSound = this.soundList[i];
                 cSound.audio = new Howl({
@@ -587,12 +585,9 @@ var ECS;
                     html5: true,
                     loop: cSound.loop,
                     onload: function () {
-                        _this.loadedCount++;
-                        if (_this.loadedCount == _this.soundList.length) {
-                            console.log("all music loaded");
-                            _this.setVolume('StartMusic', 0.1);
-                            _this.play("StartMusic");
-                        }
+                    },
+                    onloaderror: function () {
+                        alert("load sound error!");
                     }
                 });
                 this.soundPool[cSound.name] = cSound;
@@ -631,17 +626,17 @@ var ECS;
 var ECS;
 (function (ECS) {
     var BackGroundElement = /** @class */ (function () {
-        function BackGroundElement(texture, y, owner, width) {
+        function BackGroundElement(texture, owner, width) {
             if (width === void 0) { width = 940; }
             this.sprites = [];
             this.spriteWidth = texture.width - 5;
-            this.spriteHeight = texture.height - 1;
+            this.spriteHeight = ECS.GameConfig.height * 4 / 5;
             var amount = Math.ceil(width / this.spriteWidth);
             if (amount < 3)
                 amount = 3;
             for (var i = 0; i < amount; i++) {
                 var sprite = new PIXI.Sprite(texture);
-                //sprite.position.y = y;
+                sprite.height = ECS.GameConfig.height * 4 / 5;
                 owner.addChild(sprite);
                 this.sprites.push(sprite);
             }
@@ -666,24 +661,23 @@ var ECS;
         __extends(GameBackGroundSystem, _super);
         function GameBackGroundSystem() {
             var _this = _super.call(this, "view-background") || this;
-            //PIXI.DisplayObjectContainer.call( this );
             _this.BackGroundContainer = new PIXI.Container();
             _this.width = ECS.GameConfig.width;
             _this.scrollPosition = 1500;
             var bgTex = PIXI.loader.resources["img/bg_up.png"].texture;
-            _this.bgTex = new BackGroundElement(bgTex, -195, _this.BackGroundContainer);
+            _this.bgTex = new BackGroundElement(bgTex, _this.BackGroundContainer);
             _this.tree1 = PIXI.Sprite.fromFrame("tree1.png");
             _this.tree1.anchor.x = 0.5;
             _this.tree1.anchor.y = 0.5;
             _this.tree1.width = 200;
-            _this.tree1.height = 350;
+            _this.tree1.height = ECS.GameConfig.height / 3;
             _this.tree1.position.y = _this.bgTex.spriteHeight - _this.tree1.height / 2;
             _this.BackGroundContainer.addChild(_this.tree1);
             _this.tree2 = PIXI.Sprite.fromFrame("tree2.png");
             _this.tree2.anchor.x = 0.5;
             _this.tree2.anchor.y = 0.5;
             _this.tree2.width = 200;
-            _this.tree2.height = 350;
+            _this.tree2.height = ECS.GameConfig.height / 3;
             _this.tree2.position.y = _this.bgTex.spriteHeight - _this.tree2.height / 2;
             _this.BackGroundContainer.addChild(_this.tree2);
             _this.cloud1 = PIXI.Sprite.fromFrame("cloud1.png");
@@ -725,39 +719,6 @@ var ECS;
         return GameBackGroundSystem;
     }(ECS.System));
     ECS.GameBackGroundSystem = GameBackGroundSystem;
-    //GameBackground.prototype = Object.create(PIXI.DisplayObjectContainer.prototype);
-    // GameBackground.prototype.updateTransform = function()
-    // {
-    //     this.scrollPosition = GameConfig.camera.x + 8000;
-    //     var treePos = -this.scrollPosition * 1.5/2;
-    //     treePos %= this.width + 556;
-    //     treePos += this.width + 556;
-    //     treePos -= this.tree1.width/2;
-    //     this.tree1.position.x = treePos -GameConfig.xOffset;
-    //     var treePos2 = -(this.scrollPosition + this.width/2) * 1.5/2;
-    //     treePos2 %= this.width + 556;
-    //     treePos2 += this.width + 556;
-    //     treePos2 -= this.tree2.width/2;
-    //     this.tree2.position.x = treePos2 -GameConfig.xOffset;
-    //     var cloud1Pos = -this.scrollPosition * 1.5/2;
-    //     cloud1Pos %= this.width + 556;
-    //     cloud1Pos += this.width + 556;
-    //     cloud1Pos -= this.cloud1.width/2;
-    //     this.cloud1.position.x = cloud1Pos -GameConfig.xOffset;
-    //     var cloud2Pos = -(this.scrollPosition + this.width/2) * 1.5/2;
-    //     cloud2Pos %= this.width + 556;
-    //     cloud2Pos += this.width + 556;
-    //     cloud2Pos -= this.cloud2.width/2;
-    //     this.cloud2.position.x = cloud2Pos -GameConfig.xOffset;
-    //     this.bgTex.setPosition(this.scrollPosition);
-    //     //this.rearSilhouette.setPosition(this.scrollPosition);
-    //     //this.rearCanopy.setPosition(this.scrollPosition);
-    //    // this.farCanopy.setPosition(this.scrollPosition);
-    //     //this.frontSilhouette.setPosition(this.scrollPosition);
-    //     //this.roofLeaves.setPosition(this.scrollPosition);
-    //     //this.vines.setPosition(this.scrollPosition);
-    //     PIXI.DisplayObjectContainer.prototype.updateTransform.call( this );
-    // }
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
@@ -1474,7 +1435,6 @@ var ECS;
                 var floor = this.floors[i];
                 floor.view.position.x = floor.position.x - ECS.GameConfig.camera.x - 16;
                 if (floor.position.x < -1135 - ECS.GameConfig.xOffset - 16) {
-                    //console.log("delete floor");
                     this.floors.splice(i, 1);
                     i--;
                     this.engine.view.gameFront.removeChild(floor);
@@ -1484,8 +1444,8 @@ var ECS;
         FloorManager.prototype.addFloor = function (floorData) {
             var floor = this.floorPool.getObject();
             floor.position.x = floorData;
-            //floor.position.y = 520;
-            floor.position.y = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteHeight;
+            floor.position.y = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteHeight - 1;
+            floor.view.height = ECS.GameConfig.height - floor.position.y + 1;
             floor.view.position.y = floor.position.y;
             this.engine.view.gameFront.addChild(floor.view);
             this.floors.push(floor);
@@ -2428,17 +2388,6 @@ var ECS;
             }
             this.view.update();
         };
-        // reset(){
-        //     this.enemyManager.destroyAll();
-        //     this.platManager.destroyAll();
-        //     this.floorManager.destroyAll();
-        //     this.segmentManager.reset();
-        //     this.view.zoom = 1;
-        //     this.pickupCount = 0;
-        //     this.levelCount = 0;
-        //     this.player.level = 1;
-        //     this.view.game.addChild(this.player.view);
-        // }
         GameKernelSystem.prototype.gameover = function () {
             this.isPlaying = false;
             this.isDying = true;
@@ -2454,15 +2403,7 @@ var ECS;
                 zoom: 2,
                 ease: Cubic.easeOut
             });
-            //this.reset();
-            //this.start();
         };
-        // gameoverReal()
-        // {
-        //     this.gameReallyOver = true;
-        //     this.isDying = false;
-        //     //this.onGameoverReal();
-        // }
         GameKernelSystem.prototype.pickup = function (idx) {
             if (this.player.isDead)
                 return;
@@ -2471,35 +2412,6 @@ var ECS;
         return GameKernelSystem;
     }(ECS.System));
     ECS.GameKernelSystem = GameKernelSystem;
-    var GameVines = /** @class */ (function () {
-        function GameVines(owner) {
-            this.vines = [];
-            this.owner = owner;
-            for (var i = 0; i < 10; i++) {
-                var vine = new PIXI.Sprite.fromFrame("01_hanging_flower3.png");
-                vine.offset = i * 100 + Math.random() * 50;
-                vine.speed = (1.5 + Math.random() * 0.25) / 2;
-                vine.position.y = Math.random() * -200;
-                owner.addChild(vine);
-                vine.position.x = 200;
-                this.vines.push(vine);
-            }
-            ;
-            this.speed = 1;
-        }
-        GameVines.prototype.setPosition = function (position) {
-            for (var i = 0; i < this.vines.length; i++) {
-                var vine = this.vines[i];
-                var pos = -(position + vine.offset) * vine.speed;
-                pos %= this.owner.width;
-                pos += this.owner.width;
-                vine.position.x = pos;
-            }
-            ;
-        };
-        return GameVines;
-    }());
-    ECS.GameVines = GameVines;
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
@@ -2543,6 +2455,7 @@ var ECS;
             _this.device = new Utils.DeviceDetect();
             //console.log(this.device.PrintInfo());
             ECS.GameConfig.audio = new ECS.GameAudio();
+            Howler.mobileAutoEnable = true;
             //game resources list
             _this.resourceList =
                 [
@@ -2741,13 +2654,23 @@ var ECS;
 /// <reference path="./core/HashSet.ts" />
 /// <reference path="./core/GameLoad.ts" />
 var load_system = new ECS.LoadingSystem();
-//load_system.playStartScreenMusic();
+if (load_system.device.desktop) {
+    $('#modal_movie').modal('show');
+    load_system.playStartScreenMusic();
+}
+else {
+    $('#modal_setting').modal('show');
+}
 var startGame = function () {
     load_system.Init();
 };
 document.getElementById("btn_play").onclick = function () {
     document.getElementById("global").style.display = "none";
     startGame();
+};
+document.getElementById("openMusic").onclick = function () {
+    load_system.playStartScreenMusic();
+    $('#modal_setting').modal('hide');
 };
 /* =========================================================================
  *
