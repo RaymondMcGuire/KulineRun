@@ -626,7 +626,7 @@ var ECS;
 var ECS;
 (function (ECS) {
     var BackGroundElement = /** @class */ (function () {
-        function BackGroundElement(texture, owner) {
+        function BackGroundElement(texture) {
             this.sprites = [];
             this.spriteWidth = texture.width - 5;
             this.spriteHeight = ECS.GameConfig.height * 4 / 5;
@@ -635,7 +635,6 @@ var ECS;
                 var sprite = new PIXI.Sprite(texture);
                 sprite.height = ECS.GameConfig.height * 4 / 5;
                 sprite.position.y = 0;
-                owner.addChild(sprite);
                 this.sprites.push(sprite);
             }
             ;
@@ -648,6 +647,8 @@ var ECS;
                 pos += i * h;
                 pos %= h * this.sprites.length;
                 pos += h / 2;
+                if (!ECS.GameConfig.device.desktop)
+                    pos += h / 2;
                 this.sprites[i].position.x = pos;
             }
             ;
@@ -663,7 +664,12 @@ var ECS;
             _this.width = ECS.GameConfig.width;
             _this.scrollPosition = ECS.GameConfig.camera.x;
             var bgTex = PIXI.loader.resources["img/bg_up.png"].texture;
-            _this.bgTex = new BackGroundElement(bgTex, _this.BackGroundContainer);
+            if (!ECS.GameConfig.device.desktop)
+                bgTex = PIXI.loader.resources["img/bg_up_ios.png"].texture;
+            _this.bgTex = new BackGroundElement(bgTex);
+            for (var i = 0; i < _this.bgTex.sprites.length; i++) {
+                _this.BackGroundContainer.addChild(_this.bgTex.sprites[i]);
+            }
             _this.tree1 = PIXI.Sprite.fromFrame("tree1.png");
             _this.tree1.anchor.x = 0.5;
             _this.tree1.anchor.y = 0.5;
@@ -1104,8 +1110,6 @@ var ECS;
         SegmentManager.prototype.update = function () {
             this.position = ECS.GameConfig.camera.x + ECS.GameConfig.width * 2;
             var relativePosition = this.position - this.currentSegment.start;
-            // console.log("relativePosition:"+relativePosition);
-            // console.log("length:"+this.currentSegment.length);
             if (relativePosition > this.currentSegment.length) {
                 //var nextSegment = this.startSegment;//this.sections[this.count % this.sections.length];
                 var nextSegment = this.sections[this.count % this.sections.length];
@@ -1734,6 +1738,8 @@ var ECS;
             this.view.height = 135;
             this.view.width = 75;
             this.position.x = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100;
+            if (!ECS.GameConfig.device.desktop)
+                this.position.x = 2 * (ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100;
             this.floorSpriteHeight = (ECS.GameConfig.allSystem.get("background")).bgTex.spriteHeight;
             //refresh floor position
             this.refreshFloorHeight();
@@ -2463,6 +2469,7 @@ var ECS;
                     "img/blade.png",
                     "img/platform.png",
                     "img/bg_up.png",
+                    "img/bg_up_ios.png",
                     "img/bg_down.png",
                     "img/floatingGround.png",
                     "assets/background/BackgroundAssets.json",
@@ -2562,6 +2569,7 @@ var ECS;
                 ECS.GameConfig.app = _this.app;
                 ECS.GameConfig.width = _this.width;
                 ECS.GameConfig.height = _this.height;
+                ECS.GameConfig.device = _this.device;
                 ECS.GameConfig.allSystem = new Utils.HashSet();
                 var allSystem = ECS.GameConfig.allSystem;
                 allSystem.set("background", new ECS.GameBackGroundSystem());
@@ -2670,6 +2678,10 @@ document.getElementById("btn_play").onclick = function () {
 document.getElementById("openMusic").onclick = function () {
     load_system.playStartScreenMusic();
     $('#modal_setting').modal('hide');
+    $('#modal_movie').modal('show');
+};
+document.getElementById("btn_close").onclick = function () {
+    $('#modal_movie').modal('show');
 };
 /* =========================================================================
  *

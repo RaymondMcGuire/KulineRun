@@ -61,6 +61,7 @@ module ECS {
                 "img/blade.png",
                 "img/platform.png",
                 "img/bg_up.png",
+                "img/bg_up_ios.png",
                 "img/bg_down.png",
                 "img/floatingGround.png",
                 "assets/background/BackgroundAssets.json",
@@ -176,6 +177,7 @@ module ECS {
                 GameConfig.app = this.app;
                 GameConfig.width = this.width;
                 GameConfig.height = this.height;
+                GameConfig.device = this.device;
                 GameConfig.allSystem =new Utils.HashSet<System>();
                 let allSystem = GameConfig.allSystem;
                 
