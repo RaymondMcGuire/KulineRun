@@ -2448,7 +2448,7 @@ var ECS;
             this.segmentManager.chillMode = false;
             this.bulletMult = 1;
             ECS.GameConfig.audio.stop("StartMusic");
-            ECS.GameConfig.audio.setVolume('GameMusic', 0.5);
+            ECS.GameConfig.audio.setVolume('GameMusic', 0.1);
             ECS.GameConfig.audio.play("GameMusic");
         };
         GameKernelSystem.prototype.update = function () {
