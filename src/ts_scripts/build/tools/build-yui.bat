@@ -1,0 +1,1 @@
+java -jar yuicompressor-2.4.8.jar ../../../scripts/launch.js -o ../../../scripts/KulineRun.min.js

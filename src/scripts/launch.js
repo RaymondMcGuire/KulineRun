@@ -986,16 +986,27 @@ var ECS;
 (function (ECS) {
     var PickUp = /** @class */ (function () {
         function PickUp() {
-            this.pickupTextures = ["pickup_01.png", "pickup_02.png", "pickup_03.png", "pickup_04.png", "pickup_05.png", "pickup_06.png", "pickup_07.png", "pickup_08.png"];
+            this.japanFoodTextures = ["RAMEN.png", "OKONOMIYAKI.png", "DANGO.png", "TEPURA.png"];
+            this.indoFoodTextures = ["BATAGOR.png", "CIRENG.png", "SEBLAK.png", "HAMBURG.png"];
             this.position = new PIXI.Point();
+            var chooseFoodSeed = Math.random() * 10;
+            if (chooseFoodSeed > 5) {
+                this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.japanFoodTextures[Math.floor(Math.random() * this.japanFoodTextures.length)]));
+                this.shine = new PIXI.Sprite(PIXI.Texture.fromImage("img/light2.png"));
+                this.foodType = ECS.FOODMODE.JAPAN;
+                this.shine.scale.y *= 0.5;
+            }
+            else {
+                this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.indoFoodTextures[Math.floor(Math.random() * this.indoFoodTextures.length)]));
+                this.shine = PIXI.Sprite.fromFrame("pickupShine.png");
+                this.foodType = ECS.FOODMODE.INDON;
+            }
             this.view = new PIXI.Container();
-            this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.pickupTextures[Math.floor(Math.random() * this.pickupTextures.length)]));
             this.clip.anchor.x = 0.5;
             this.clip.anchor.y = 0.5;
-            this.shine = PIXI.Sprite.fromFrame("pickupShine.png");
             this.shine.anchor.x = this.shine.anchor.y = 0.5;
             this.shine.scale.x = this.shine.scale.y * ECS.GameConfig.height / ECS.GameConfig.fixedHeight;
-            this.shine.alpha = 0.5;
+            this.shine.alpha = 0.8;
             this.view.addChild(this.shine);
             this.view.addChild(this.clip);
             this.width = ECS.GameConfig.height * 100 / ECS.GameConfig.fixedHeight;
@@ -1558,6 +1569,7 @@ var ECS;
     var GameEnemy = /** @class */ (function () {
         function GameEnemy() {
             this.isEatNow = false;
+            this.isExploded = false;
             this.position = new PIXI.Point();
             this.isHit = false;
             this.width = 150;
@@ -1585,20 +1597,12 @@ var ECS;
             this.view.play();
         }
         GameEnemy.prototype.reset = function () {
-            // if(this.explosion)
-            // {
-            //     this.view.removeChild(this.explosion);
-            //     this.explosion.reset();
-            // }
             this.isHit = false;
         };
         GameEnemy.prototype.hit = function () {
             if (this.isHit)
                 return;
             this.isHit = true;
-            //if(!this.explosion) this.explosion = new Explosion();
-            //this.explosion.explode();
-            //this.view.addChild(this.explosion);
             ECS.GameConfig.audio.play("catDead");
             this.view.setTexture(PIXI.Texture.fromImage("img/empty.png"));
         };
@@ -1623,133 +1627,6 @@ var ECS;
         return GameEnemy;
     }());
     ECS.GameEnemy = GameEnemy;
-    var Partical = /** @class */ (function () {
-        function Partical() {
-            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("starPops0004.png"));
-            this.anchor.x = 0.5;
-            this.anchor.y = 0.5;
-            this.speed = new PIXI.Point();
-        }
-        return Partical;
-    }());
-    ECS.Partical = Partical;
-    Partical.prototype = Object.create(PIXI.Sprite.prototype);
-    var GameCharacterTrail = /** @class */ (function () {
-        function GameCharacterTrail(stage) {
-            this.stage = stage;
-            this.target = new PIXI.Point();
-            this.particals = [];
-            this.particalPool = new ECS.GameObjectPool(Partical);
-            this.max = 100;
-            this.count = 0;
-        }
-        GameCharacterTrail.prototype.update = function () {
-            if (this.target.isFlying && !this.target.isDead) {
-                this.count++;
-                if (this.count % 3) {
-                    var partical = this.particalPool.getObject();
-                    this.stage.addChild(partical);
-                    partical.position.x = this.target.view.position.x + (Math.random() * 10) - 5 - 20;
-                    partical.position.y = this.target.view.position.y + 50;
-                    partical.direction = 0;
-                    partical.dirSpeed = Math.random() > 0.5 ? -0.1 : 0.1;
-                    partical.sign = this.particals.length % 2 ? -1 : 1;
-                    partical.scaly = Math.random() * 2 - 1; // - this.target.speed.x * 0.3;
-                    partical.speed.y = this.target.accel * 3;
-                    partical.alphay = 2;
-                    partical.rotation = Math.random() * Math.PI * 2;
-                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
-                    this.particals.push(partical);
-                }
-            }
-            for (var i = 0; i < this.particals.length; i++) {
-                var partical = this.particals[i];
-                partical.dirSpeed += 0.003 * partical.sign;
-                if (partical.dirSpeed > 2)
-                    partical.dirSpeed = 2;
-                partical.direction += partical.dirSpeed;
-                partical.speed.x = Math.sin(partical.direction); // *= 1.1;
-                partical.speed.y = Math.cos(partical.direction);
-                partical.position.x += partical.speed.x * 5 * partical.scaly;
-                partical.position.y += partical.speed.y * 3;
-                partical.alphay *= 0.85;
-                partical.rotation += partical.speed.x * 0.1;
-                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
-                if (partical.alpha < 0.01) {
-                    this.stage.removeChild(partical);
-                    this.particals.splice(i, 1);
-                    //this.particalPool.returnObject(partical);
-                    i--;
-                }
-            }
-        };
-        return GameCharacterTrail;
-    }());
-    ECS.GameCharacterTrail = GameCharacterTrail;
-    var ParticalFire = /** @class */ (function () {
-        function ParticalFire() {
-            PIXI.Sprite.call(this, PIXI.Texture.fromFrame("fireCloud.png"));
-            this.anchor.x = 0.5;
-            this.anchor.y = 0.5;
-            this.speed = new PIXI.Point();
-        }
-        return ParticalFire;
-    }());
-    ECS.ParticalFire = ParticalFire;
-    ParticalFire.prototype = Object.create(PIXI.Sprite.prototype);
-    var GameCharacterTrailFire = /** @class */ (function () {
-        function GameCharacterTrailFire(stage) {
-            this.stage = stage;
-            this.target = new PIXI.Point();
-            this.particals = [];
-            this.particalPool = new ECS.GameObjectPool(ParticalFire);
-            this.max = 100;
-            this.count = 0;
-            this.mOffset = PIXI.mat3.create(); //PIXI.mat3.identity(PIXI.mat3.create());
-            this.mOffset[2] = -30; //this.position.x;
-            this.mOffset[5] = 30; //this.position.y;
-            this.spare = PIXI.mat3.create(); //PIXI.mat3.identity();
-        }
-        GameCharacterTrailFire.prototype.update = function () {
-            //PIXI.Rope.prototype.updateTransform.call(this);
-            if (this.target.isDead) {
-                this.mOffset;
-                PIXI.mat3.multiply(this.mOffset, this.target.view.localTransform, this.spare);
-                this.count++;
-                if (this.count % 3) {
-                    var partical = this.particalPool.getObject();
-                    this.stage.addChild(partical);
-                    partical.position.x = this.spare[2];
-                    partical.position.y = this.spare[5];
-                    partical.speed.x = 1 + Math.random() * 2;
-                    partical.speed.y = 1 + Math.random() * 2;
-                    partical.speed.x *= -1;
-                    partical.speed.y *= 1;
-                    partical.alphay = 2;
-                    partical.rotation = Math.random() * Math.PI * 2;
-                    partical.scale.x = partical.scale.y = 0.2 + Math.random() * 0.5;
-                    this.particals.push(partical);
-                }
-            } // add partical!
-            for (var i = 0; i < this.particals.length; i++) {
-                var partical = this.particals[i];
-                partical.scale.x = partical.scale.y *= 1.02;
-                partical.alphay *= 0.85;
-                partical.alpha = partical.alphay > 1 ? 1 : partical.alphay;
-                partical.position.x += partical.speed.x * 2;
-                partical.position.y += partical.speed.y * 2;
-                if (partical.alpha < 0.01) {
-                    this.stage.removeChild(partical);
-                    this.particals.splice(i, 1);
-                    //this.particalPool.returnObject(partical);
-                    i--;
-                }
-            }
-            ;
-        };
-        return GameCharacterTrailFire;
-    }());
-    ECS.GameCharacterTrailFire = GameCharacterTrailFire;
 })(ECS || (ECS = {}));
 /* =========================================================================
  *
@@ -1827,15 +1704,9 @@ var ECS;
                 var pickups = this.currentSegment.coins;
                 var length = pickups.length / 2;
                 for (var i = 0; i < length; i++) {
-                    //random distribute
-                    var seed = Math.random() * 10;
-                    var curType = ECS.FOODMODE.INDON;
-                    if (seed > 5) {
-                        curType = ECS.FOODMODE.JAPAN;
-                    }
                     var foodY = pickups[(i * 2) + 1];
                     var realfoodY = ECS.GameConfig.height * foodY / ECS.GameConfig.fixedHeight;
-                    this.engine.pickupManager.addPickup((ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i * 2], realfoodY, curType);
+                    this.engine.pickupManager.addPickup((ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i * 2], realfoodY);
                 }
                 var platforms = this.currentSegment.platform;
                 var length = platforms.length / 2;
@@ -2023,11 +1894,10 @@ var ECS;
                 }
             }
         };
-        PickupManager.prototype.addPickup = function (x, y, type) {
+        PickupManager.prototype.addPickup = function (x, y) {
             var pickup = this.pickupPool.getObject();
             pickup.position.x = x;
             pickup.position.y = y;
-            pickup.foodType = type;
             this.pickups.push(pickup);
             this.engine.view.game.addChild(pickup.view);
         };
@@ -2550,6 +2420,8 @@ var ECS;
             //game resources list
             _this.resourceList =
                 [
+                    "img/light1.png",
+                    "img/light2.png",
                     "img/doroCat.png",
                     "img/dash_stock.png",
                     "img/blade.png",

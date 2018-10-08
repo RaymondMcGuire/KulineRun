@@ -8,6 +8,8 @@ PUSHD tools
 
 call compileTSScripts.bat
 
+call build-yui.bat
+
 POPD
 POPD
 

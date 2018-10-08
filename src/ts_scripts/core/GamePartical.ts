@@ -32,6 +32,7 @@ module ECS {
         updateTransform:any;
         explode:any;
         reset:any;
+        scale:any;
         constructor(){
             PIXI.DisplayObjectContainer.call( this );
 	

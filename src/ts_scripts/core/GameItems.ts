@@ -9,7 +9,8 @@ module ECS {
     declare var PIXI: any;
 
     export class PickUp{
-        pickupTextures:any;
+        japanFoodTextures:any;
+        indoFoodTextures:any;
         position:any;
         view:any;
         clip:any;
@@ -26,21 +27,35 @@ module ECS {
         foodType:FOODMODE;
         constructor(){
             
-            this.pickupTextures = ["pickup_01.png", "pickup_02.png", "pickup_03.png", "pickup_04.png", "pickup_05.png", "pickup_06.png", "pickup_07.png", "pickup_08.png"];
+            this.japanFoodTextures = ["RAMEN.png","OKONOMIYAKI.png","DANGO.png","TEPURA.png"];
+            this.indoFoodTextures = ["BATAGOR.png","CIRENG.png","SEBLAK.png","HAMBURG.png"];
 
             this.position = new PIXI.Point();
+
+            var chooseFoodSeed = Math.random() * 10;
+            if(chooseFoodSeed > 5){
+                this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.japanFoodTextures[Math.floor(Math.random()*this.japanFoodTextures.length)]));
+                this.shine = new PIXI.Sprite(PIXI.Texture.fromImage("img/light2.png"));
+                this.foodType = FOODMODE.JAPAN;
+                this.shine.scale.y *=0.5;
+            }else{
+                this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.indoFoodTextures[Math.floor(Math.random()*this.indoFoodTextures.length)]));
+                this.shine = PIXI.Sprite.fromFrame("pickupShine.png");
+                this.foodType = FOODMODE.INDON;
+            }
+
             
             this.view = new PIXI.Container();
-            this.clip = new PIXI.Sprite(PIXI.Texture.fromFrame(this.pickupTextures[Math.floor(Math.random()*this.pickupTextures.length)]));
+            
             
             this.clip.anchor.x = 0.5;
             this.clip.anchor.y = 0.5;
             
-            this.shine = PIXI.Sprite.fromFrame("pickupShine.png");
+            
             this.shine.anchor.x = this.shine.anchor.y = 0.5;
-
+            
             this.shine.scale.x = this.shine.scale.y *GameConfig.height/GameConfig.fixedHeight;
-            this.shine.alpha = 0.5;
+            this.shine.alpha = 0.8;
             this.view.addChild(this.shine);
             this.view.addChild(this.clip);
             
@@ -60,6 +75,7 @@ module ECS {
                 this.clip.rotation = Math.sin(this.count * 1.5) * 0.2;
                 
                 this.shine.rotation = this.count * 0.2;
+
             }
             else
             {

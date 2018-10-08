@@ -114,17 +114,10 @@ module ECS {
                 
                 for ( var i = 0; i < length; i++) 
                 {
-                    //random distribute
-                    var seed = Math.random()*10;
-                    var curType = FOODMODE.INDON;
-                    if(seed > 5){
-                        curType = FOODMODE.JAPAN;
-                    }
-
                     var foodY =  pickups[(i*2)+1];
                     var realfoodY = GameConfig.height * foodY/GameConfig.fixedHeight;
 
-                    this.engine.pickupManager.addPickup((<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i*2],realfoodY,curType);
+                    this.engine.pickupManager.addPickup((<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i*2],realfoodY);
                 }
 
                 var platforms = this.currentSegment.platform;
@@ -394,12 +387,11 @@ module ECS {
             }
         }
 
-        addPickup(x:number, y:number,type:FOODMODE)
+        addPickup(x:number, y:number)
         {
             var pickup = this.pickupPool.getObject();
             pickup.position.x = x
             pickup.position.y = y
-            pickup.foodType = type;
             
             this.pickups.push(pickup);
             this.engine.view.game.addChild(pickup.view);

@@ -56,6 +56,8 @@ module ECS {
             //game resources list
             this.resourceList =
             [
+                "img/light1.png",
+                "img/light2.png",
                 "img/doroCat.png",
                 "img/dash_stock.png",
                 "img/blade.png",
