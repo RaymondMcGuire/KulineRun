@@ -114,10 +114,11 @@ module ECS {
                 
                 for ( var i = 0; i < length; i++) 
                 {
-                    var foodY =  pickups[(i*2)+1];
+                    var XFloat = Math.floor(Math.random()*50+400);
+                    var foodY =  pickups[(i*2)+1] ;
                     var realfoodY = GameConfig.height * foodY/GameConfig.fixedHeight;
 
-                    this.engine.pickupManager.addPickup((<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i*2],realfoodY);
+                    this.engine.pickupManager.addPickup((<GameBackGroundSystem>(GameConfig.allSystem.get("background"))).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i*2] + XFloat,realfoodY);
                 }
 
                 var platforms = this.currentSegment.platform;

@@ -1704,9 +1704,10 @@ var ECS;
                 var pickups = this.currentSegment.coins;
                 var length = pickups.length / 2;
                 for (var i = 0; i < length; i++) {
+                    var XFloat = Math.floor(Math.random() * 50 + 400);
                     var foodY = pickups[(i * 2) + 1];
                     var realfoodY = ECS.GameConfig.height * foodY / ECS.GameConfig.fixedHeight;
-                    this.engine.pickupManager.addPickup((ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i * 2], realfoodY);
+                    this.engine.pickupManager.addPickup((ECS.GameConfig.allSystem.get("background")).bgTex.spriteWidth + 100 + this.currentSegment.start + pickups[i * 2] + XFloat, realfoodY);
                 }
                 var platforms = this.currentSegment.platform;
                 var length = platforms.length / 2;
