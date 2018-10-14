@@ -81,9 +81,9 @@ module ECS {
                 }
 
                 this.groundAssetList =[
-                    "obstacle all-11.png",
+                    "obstacle-11.png",
                     "tree1.png",
-                    "obstacle all-13.png",
+                    "obstacle-13.png",
                     "tree2.png"
                 ];
                 this.groundSpriteList = [];
