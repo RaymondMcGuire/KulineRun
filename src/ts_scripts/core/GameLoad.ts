@@ -141,7 +141,7 @@ module ECS {
                 .add(this.bgImage)
                 .add(this.logoImage)
                 .load(()=>{
-                    console.log("show loading panel!");
+                    //console.log("show loading panel!");
                     //show bg image
                     this.loadingStage = new PIXI.Container();
                     let load_bg = new PIXI.Sprite(PIXI.loader.resources[this.bgImage].texture);
@@ -174,7 +174,7 @@ module ECS {
             PIXI.loader
             .add(this.resourceList)
             .load(()=>{
-                console.log("data assets loaded!");
+                //console.log("data assets loaded!");
                 //remove loading panel
                 this.app.stage.removeChild(this.loadingStage);
                 

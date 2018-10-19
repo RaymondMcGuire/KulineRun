@@ -45,7 +45,7 @@ module ECS {
   
 
         constructor(engine:any){
-          console.log("init segmeng manager!");
+          //console.log("init segmeng manager!");
           this.engine = engine;  
           this.sections = data;
           this.count = 0;
@@ -191,7 +191,7 @@ module ECS {
         platformPool:any;
         position:any;
         constructor(engine:any){
-            console.log("init platform manager!");
+            //console.log("init platform manager!");
             this.engine = engine;
             this.platforms = [];
             this.platformPool = new GameObjectPool(Platform);
@@ -259,7 +259,7 @@ module ECS {
         view:any;
         position:any;
         constructor(engine:any){
-            console.log("init enemy manager!");
+            //console.log("init enemy manager!");
             this.engine = engine;
             this.enemies = [];
             this.enemyPool = new GameObjectPool(GameEnemy);
@@ -341,7 +341,7 @@ module ECS {
         canPickOrNot:boolean=true;
         MAX_PICKUP_NUM:number = 4;
         constructor(engine:any){
-            console.log("init pick up manager!");
+            //console.log("init pick up manager!");
             this.engine=engine;
             this.pickups = [];
             this.pickupPool = new GameObjectPool(PickUp);        
@@ -406,16 +406,16 @@ module ECS {
 
             if(isPlayer){
                 pickup.player = this.engine.player;
-                pickup.pickupPosition = {x:pickup.position.x, y:pickup.position.y}//.clone();
+                pickup.pickupPosition = {x:pickup.position.x, y:pickup.position.y};
                 pickup.ratio = 0;
-    
+            
+                GameConfig.audio.play("pickUpFood");
+
                 //judge food pool, 0 jap 1 indo
-                if(this.pickedUpPool.length <this.MAX_PICKUP_NUM-1){
-                    //console.log("collect food, type:"+pickup.foodType);
+                if(this.pickedUpPool.length <this.MAX_PICKUP_NUM-1 && this.canPickOrNot){
                     this.pickedUpPool.push(pickup.foodType);
                     this.engine.view.specialFood.digits[this.pickedUpPool.length-1].texture = this.engine.view.specialFood.activeFoods[this.pickedUpPool.length-1];
                 }else if(this.pickedUpPool.length == this.MAX_PICKUP_NUM-1 && this.canPickOrNot){
-                    //console.log("collect food, type:"+pickup.foodType);
                     this.pickedUpPool.push(pickup.foodType);
                     this.engine.view.specialFood.digits[this.pickedUpPool.length-1].texture = this.engine.view.specialFood.activeFoods[this.pickedUpPool.length-1];
                     //count for jan food
@@ -426,10 +426,8 @@ module ECS {
                         }
                     }
     
-                    GameConfig.audio.play("pickUpFood");
-                    var otherCnt = 4-cnt;
                     var specialMode = SPECIALMODE.NINJAMODE;
-                    if(cnt > otherCnt){
+                    if(cnt > 2){
                         specialMode = SPECIALMODE.JAPANMODE;
                         GameConfig.game.player.view.addChild(GameConfig.game.player.shinobiEffect1);      
                         GameConfig.game.player.view.addChild(GameConfig.game.player.shinobiEffect2);      
@@ -438,13 +436,13 @@ module ECS {
                         GameConfig.audio.play("ninjiaMode");
                         
                         //console.log("change special mode:japan");
-                    }else if (cnt < otherCnt){
+                    }else if (cnt < 2){
                         specialMode = SPECIALMODE.INDONMODE
                         GameConfig.tmpTimeClockStart = GameConfig.time.currentTime;
                         GameConfig.game.player.view.addChild(GameConfig.game.player.indoEffect);
                         GameConfig.audio.play("indoMode");
                         //console.log("change special mode:indo");
-                    }else{
+                    }else if (cnt == 2){
                         specialMode = SPECIALMODE.NINJAMODE;
                         GameConfig.tmpTimeClockStart = GameConfig.time.currentTime;
                         GameConfig.game.player.view.addChild(GameConfig.game.player.marioEffect);
@@ -521,7 +519,7 @@ module ECS {
         floors:any;
         floorPool:any;
         constructor(engine:any){
-            console.log("init floor manager!");
+            //console.log("init floor manager!");
             this.engine = engine;
             this.count = 0;
             this.floors = [];
@@ -570,7 +568,7 @@ module ECS {
         engine:any;
         isOnPlat:boolean=false;
         constructor(engine){    
-            console.log("init collision manager!");
+            //console.log("init collision manager!");
             this.engine = engine;
         }
 

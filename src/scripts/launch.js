@@ -1656,7 +1656,7 @@ var ECS;
     ECS.GameObjectPool = GameObjectPool;
     var SegmentManager = /** @class */ (function () {
         function SegmentManager(engine) {
-            console.log("init segmeng manager!");
+            //console.log("init segmeng manager!");
             this.engine = engine;
             this.sections = data;
             this.count = 0;
@@ -1756,7 +1756,7 @@ var ECS;
     ECS.Platform = Platform;
     var PlatformManager = /** @class */ (function () {
         function PlatformManager(engine) {
-            console.log("init platform manager!");
+            //console.log("init platform manager!");
             this.engine = engine;
             this.platforms = [];
             this.platformPool = new GameObjectPool(Platform);
@@ -1806,7 +1806,7 @@ var ECS;
     ECS.PlatformManager = PlatformManager;
     var EnemyManager = /** @class */ (function () {
         function EnemyManager(engine) {
-            console.log("init enemy manager!");
+            //console.log("init enemy manager!");
             this.engine = engine;
             this.enemies = [];
             this.enemyPool = new GameObjectPool(ECS.GameEnemy);
@@ -1864,7 +1864,7 @@ var ECS;
         function PickupManager(engine) {
             this.canPickOrNot = true;
             this.MAX_PICKUP_NUM = 4;
-            console.log("init pick up manager!");
+            //console.log("init pick up manager!");
             this.engine = engine;
             this.pickups = [];
             this.pickupPool = new GameObjectPool(ECS.PickUp);
@@ -1910,16 +1910,15 @@ var ECS;
             pickup.isPickedUp = true;
             if (isPlayer) {
                 pickup.player = this.engine.player;
-                pickup.pickupPosition = { x: pickup.position.x, y: pickup.position.y }; //.clone();
+                pickup.pickupPosition = { x: pickup.position.x, y: pickup.position.y };
                 pickup.ratio = 0;
+                ECS.GameConfig.audio.play("pickUpFood");
                 //judge food pool, 0 jap 1 indo
-                if (this.pickedUpPool.length < this.MAX_PICKUP_NUM - 1) {
-                    //console.log("collect food, type:"+pickup.foodType);
+                if (this.pickedUpPool.length < this.MAX_PICKUP_NUM - 1 && this.canPickOrNot) {
                     this.pickedUpPool.push(pickup.foodType);
                     this.engine.view.specialFood.digits[this.pickedUpPool.length - 1].texture = this.engine.view.specialFood.activeFoods[this.pickedUpPool.length - 1];
                 }
                 else if (this.pickedUpPool.length == this.MAX_PICKUP_NUM - 1 && this.canPickOrNot) {
-                    //console.log("collect food, type:"+pickup.foodType);
                     this.pickedUpPool.push(pickup.foodType);
                     this.engine.view.specialFood.digits[this.pickedUpPool.length - 1].texture = this.engine.view.specialFood.activeFoods[this.pickedUpPool.length - 1];
                     //count for jan food
@@ -1929,10 +1928,8 @@ var ECS;
                             cnt++;
                         }
                     }
-                    ECS.GameConfig.audio.play("pickUpFood");
-                    var otherCnt = 4 - cnt;
                     var specialMode = ECS.SPECIALMODE.NINJAMODE;
-                    if (cnt > otherCnt) {
+                    if (cnt > 2) {
                         specialMode = ECS.SPECIALMODE.JAPANMODE;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.shinobiEffect1);
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.shinobiEffect2);
@@ -1941,14 +1938,14 @@ var ECS;
                         ECS.GameConfig.audio.play("ninjiaMode");
                         //console.log("change special mode:japan");
                     }
-                    else if (cnt < otherCnt) {
+                    else if (cnt < 2) {
                         specialMode = ECS.SPECIALMODE.INDONMODE;
                         ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.indoEffect);
                         ECS.GameConfig.audio.play("indoMode");
                         //console.log("change special mode:indo");
                     }
-                    else {
+                    else if (cnt == 2) {
                         specialMode = ECS.SPECIALMODE.NINJAMODE;
                         ECS.GameConfig.tmpTimeClockStart = ECS.GameConfig.time.currentTime;
                         ECS.GameConfig.game.player.view.addChild(ECS.GameConfig.game.player.marioEffect);
@@ -2002,7 +1999,7 @@ var ECS;
     ECS.Floor = Floor;
     var FloorManager = /** @class */ (function () {
         function FloorManager(engine) {
-            console.log("init floor manager!");
+            //console.log("init floor manager!");
             this.engine = engine;
             this.count = 0;
             this.floors = [];
@@ -2041,7 +2038,7 @@ var ECS;
     var CollisionManager = /** @class */ (function () {
         function CollisionManager(engine) {
             this.isOnPlat = false;
-            console.log("init collision manager!");
+            //console.log("init collision manager!");
             this.engine = engine;
         }
         CollisionManager.prototype.update = function () {
@@ -2494,7 +2491,7 @@ var ECS;
                 .add(this.bgImage)
                 .add(this.logoImage)
                 .load(function () {
-                console.log("show loading panel!");
+                //console.log("show loading panel!");
                 //show bg image
                 _this.loadingStage = new PIXI.Container();
                 var load_bg = new PIXI.Sprite(PIXI.loader.resources[_this.bgImage].texture);
@@ -2524,7 +2521,7 @@ var ECS;
             PIXI.loader
                 .add(this.resourceList)
                 .load(function () {
-                console.log("data assets loaded!");
+                //console.log("data assets loaded!");
                 //remove loading panel
                 _this.app.stage.removeChild(_this.loadingStage);
                 //setup game main system 
